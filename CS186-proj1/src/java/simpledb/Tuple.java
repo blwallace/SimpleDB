@@ -15,6 +15,7 @@ public class Tuple implements Serializable {
     //This section creates private instances. we need to create a record id, tupleDesc,
     private RecordId _recordId;
     private TupleDesc _tupleDesc;
+    private Field[] _field;
 
 
 
@@ -29,6 +30,8 @@ public class Tuple implements Serializable {
      */
     public Tuple(TupleDesc td) {
         // a tupledesc returns
+        _field = new Field[td.numFields()];
+        _tupleDesc = td;
     }
 
     /**
@@ -66,7 +69,7 @@ public class Tuple implements Serializable {
      *            new value for the field.
      */
     public void setField(int i, Field f) {
-        // some code goes here
+        _field[i] = f;
     }
 
     /**
@@ -76,8 +79,7 @@ public class Tuple implements Serializable {
      *            field index to return. Must be a valid index.
      */
     public Field getField(int i) {
-        // some code goes here
-        return null;
+        return _field[i];
     }
 
     /**

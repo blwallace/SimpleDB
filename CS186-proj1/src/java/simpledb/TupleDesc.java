@@ -135,8 +135,7 @@ public class TupleDesc implements Serializable {
      *         Note that tuples from a given TupleDesc are of a fixed size.
      */
     public int getSize() {
-        // some code goes here
-        return 0;
+        return _typeAr[0].getLen();
     }
 
     /**
