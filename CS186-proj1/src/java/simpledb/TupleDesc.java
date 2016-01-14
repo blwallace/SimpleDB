@@ -8,6 +8,10 @@ import java.util.*;
  */
 public class TupleDesc implements Serializable {
 
+    //taken from constructor. now global variables
+    Type[] _typeAr;
+    String[] _fieldAr;
+
     /**
      * A help class to facilitate organizing the information of each field
      * */
@@ -59,7 +63,8 @@ public class TupleDesc implements Serializable {
      *            be null.
      */
     public TupleDesc(Type[] typeAr, String[] fieldAr) {
-        // some code goes here
+        _typeAr = typeAr;
+        _fieldAr = fieldAr;
     }
 
     /**
@@ -71,15 +76,14 @@ public class TupleDesc implements Serializable {
      *            TupleDesc. It must contain at least one entry.
      */
     public TupleDesc(Type[] typeAr) {
-        // some code goes here
+        _typeAr = typeAr;
     }
 
     /**
      * @return the number of fields in this TupleDesc
      */
     public int numFields() {
-        // some code goes here
-        return 0;
+        return _typeAr.length;
     }
 
     /**
@@ -92,8 +96,10 @@ public class TupleDesc implements Serializable {
      *             if i is not a valid field reference.
      */
     public String getFieldName(int i) throws NoSuchElementException {
-        // some code goes here
-        return null;
+        //return the text in the string at i
+        return _fieldAr[i];
+
+//        return null;
     }
 
     /**
@@ -107,8 +113,7 @@ public class TupleDesc implements Serializable {
      *             if i is not a valid field reference.
      */
     public Type getFieldType(int i) throws NoSuchElementException {
-        // some code goes here
-        return null;
+        return _typeAr[i];
     }
 
     /**
