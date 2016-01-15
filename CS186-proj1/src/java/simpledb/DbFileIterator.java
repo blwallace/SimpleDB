@@ -1,6 +1,7 @@
 package simpledb;
+
 import java.io.Serializable;
-import java.util.*;
+import java.util.NoSuchElementException;
 
 /**
  * DbFileIterator is the iterator interface that all SimpleDB Dbfile should

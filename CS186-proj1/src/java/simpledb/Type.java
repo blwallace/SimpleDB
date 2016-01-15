@@ -1,7 +1,9 @@
 package simpledb;
 
+import java.io.DataInputStream;
+import java.io.IOException;
+import java.io.Serializable;
 import java.text.ParseException;
-import java.io.*;
 
 /**
  * Class representing a type in SimpleDB.

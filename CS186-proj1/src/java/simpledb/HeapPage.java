@@ -1,7 +1,8 @@
 package simpledb;
 
-import java.util.*;
 import java.io.*;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * Each instance of HeapPage stores data for one page of HeapFiles and 

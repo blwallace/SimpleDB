@@ -1,7 +1,8 @@
 package simpledb;
 
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.IOException;
+import java.util.ArrayList;
 
 /**
  * HeapFile is an implementation of a DbFile that stores a collection of tuples

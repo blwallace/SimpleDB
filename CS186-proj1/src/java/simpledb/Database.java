@@ -1,6 +1,7 @@
 package simpledb;
 
-import java.io.*;
+import java.io.File;
+import java.io.IOException;
 
 /** Database is a class that initializes several static
     variables used by the database system (the catalog, the buffer pool,

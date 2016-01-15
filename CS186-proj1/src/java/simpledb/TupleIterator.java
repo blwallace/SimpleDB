@@ -1,6 +1,6 @@
 package simpledb;
 
-import java.util.*;
+import java.util.Iterator;
 
 /**
  * Implements a DbIterator by wrapping an Iterable<Tuple>.

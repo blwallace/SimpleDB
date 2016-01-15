@@ -1,6 +1,6 @@
 package simpledb;
 
-import java.io.*;
+import java.io.IOException;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from

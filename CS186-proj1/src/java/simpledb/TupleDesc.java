@@ -1,7 +1,8 @@
 package simpledb;
 
 import java.io.Serializable;
-import java.util.*;
+import java.util.Iterator;
+import java.util.NoSuchElementException;
 
 /**
  * TupleDesc describes the schema of a tuple.
@@ -9,7 +10,11 @@ import java.util.*;
 public class TupleDesc implements Serializable {
 
     //taken from constructor. now global variables
+    //array specifying the number of and types of fields in this
+    //TupleDesc. It must contain at least one entry.
     Type[] _typeAr;
+
+    //array specifying the names of the fields
     String[] _fieldAr;
 
     /**
@@ -126,8 +131,12 @@ public class TupleDesc implements Serializable {
      *             if no field with a matching name is found.
      */
     public int fieldNameToIndex(String name) throws NoSuchElementException {
-        // some code goes here
-        return 0;
+       for(int i = 0; i < _fieldAr.length; i++) {
+           if (_fieldAr[i] == name) {
+               return i;
+           }
+       }
+        throw new NoSuchElementException();
     }
 
     /**
@@ -149,8 +158,24 @@ public class TupleDesc implements Serializable {
      * @return the new TupleDesc
      */
     public static TupleDesc merge(TupleDesc td1, TupleDesc td2) {
-        // some code goes here
-        return null;
+        // we need to create  anew tuple. lets first find the length
+        int length = td1.numFields() + td2.numFields();
+
+        // create new variables for the new
+        Type[] typeAr = new Type[length];
+        String[] fieldAr = new String[length];
+
+        //build new tuple
+        for(int i = 0; i < td1.numFields(); i++){
+            typeAr[i] = td1.getFieldType(i);
+            fieldAr[i] = td1.getFieldName(i);
+        }
+        for(int j = td1.numFields(); j < length; j++){
+            typeAr[j] = td1.getFieldType(j);
+            fieldAr[j] = td1.getFieldName(j);
+        }
+
+        return new TupleDesc(typeAr,fieldAr);
     }
 
     /**
