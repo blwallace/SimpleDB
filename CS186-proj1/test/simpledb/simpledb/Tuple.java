@@ -22,7 +22,7 @@ public class Tuple implements Serializable {
 
     /**
      * Create a new tuple with the specified schema (type).
-     * 
+     *
      * @param td
      *            the schema of this tuple. It must be a valid TupleDesc
      *            instance with at least one field.
@@ -43,7 +43,7 @@ public class Tuple implements Serializable {
      */
     public TupleDesc getTupleDesc() {
         //bw return a Tuple Description
-       return _tupleDesc;
+        return _tupleDesc;
     }
 
     /**
@@ -56,7 +56,7 @@ public class Tuple implements Serializable {
 
     /**
      * Set the RecordId information for this tuple.
-     * 
+     *
      * @param rid
      *            the new RecordId for this tuple.
      */
@@ -66,7 +66,7 @@ public class Tuple implements Serializable {
 
     /**
      * Change the value of the ith field of this tuple.
-     * 
+     *
      * @param i
      *            index of the field to change. It must be a valid index.
      * @param f
@@ -78,7 +78,7 @@ public class Tuple implements Serializable {
 
     /**
      * @return the value of the ith field, or null if it has not been set.
-     * 
+     *
      * @param i
      *            field index to return. Must be a valid index.
      */
@@ -89,16 +89,22 @@ public class Tuple implements Serializable {
     /**
      * Returns the contents of this Tuple as a string. Note that to pass the
      * system tests, the format needs to be as follows:
-     * 
+     *
      * column1\tcolumn2\tcolumn3\t...\tcolumnN\n
-     * 
+     *
      * where \t is any whitespace, except newline, and \n is a newline
      */
     public String toString() {
-        // some code goes here
-        return "test";
+        //create variable to build string
+        String string = "";
+        for(int i = 0; i < _field.length;i++){
+            string += _field[i] + "\t";
+        }
+        string += "\n";
+        System.out.printf(string);
+        return string;
     }
-    
+
     /**
      * @return
      *        An iterator which iterates over all the fields of this tuple

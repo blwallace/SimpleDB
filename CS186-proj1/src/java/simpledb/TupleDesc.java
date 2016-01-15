@@ -163,8 +163,11 @@ public class TupleDesc implements Serializable {
      * @return true if the object is equal to this TupleDesc.
      */
     public boolean equals(Object o) {
-        // some code goes here
-        return false;
+        if(this == o){
+            return true;
+        }
+        else
+            return false;
     }
 
     public int hashCode() {
