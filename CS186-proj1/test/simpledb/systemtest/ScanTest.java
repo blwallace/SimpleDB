@@ -14,7 +14,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import simpledb.*;
-
+import simpledb.simpledb.*;
 /**
  * Dumps the contents of a table.
  * args[1] is the number of columns.  E.g., if it's 5, then ScanTest will end

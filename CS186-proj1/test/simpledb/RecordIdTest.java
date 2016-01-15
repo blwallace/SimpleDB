@@ -8,7 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import simpledb.systemtest.SimpleDbTestBase;
-
+import simpledb.simpledb.*;
 public class RecordIdTest extends SimpleDbTestBase {
 
     private static RecordId hrid;

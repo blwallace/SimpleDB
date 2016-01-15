@@ -6,6 +6,7 @@ import junit.framework.JUnit4TestAdapter;
 import org.junit.Test;
 
 import simpledb.systemtest.SimpleDbTestBase;
+import simpledb.simpledb.*;
 
 public class TupleTest extends SimpleDbTestBase {
 

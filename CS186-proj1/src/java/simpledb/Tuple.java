@@ -29,7 +29,12 @@ public class Tuple implements Serializable {
      *            instance with at least one field.
      */
     public Tuple(TupleDesc td) {
+        if(td == null){
+            throw new NullPointerException();
+        }
+
         // a tupledesc returns
+
         _field = new Field[td.numFields()];
         _tupleDesc = td;
     }
@@ -91,8 +96,13 @@ public class Tuple implements Serializable {
      * where \t is any whitespace, except newline, and \n is a newline
      */
     public String toString() {
-        // some code goes here
-        throw new UnsupportedOperationException("Implement this");
+        //create variable to build string
+        String string = "";
+        for(int i = 0; i < _field.length;i++){
+            string += _field[i] + "\t";
+        }
+        string += "\n";
+        return string;
     }
     
     /**

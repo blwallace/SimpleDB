@@ -2,6 +2,7 @@ package simpledb;
 
 import java.io.*;
 import java.util.*;
+import simpledb.simpledb.*;
 
 import static org.junit.Assert.*;
 

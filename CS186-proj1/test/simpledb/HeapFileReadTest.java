@@ -10,7 +10,7 @@ import org.junit.Test;
 
 import static org.junit.Assert.*;
 import junit.framework.JUnit4TestAdapter;
-
+import simpledb.simpledb.*;
 public class HeapFileReadTest extends SimpleDbTestBase {
     private HeapFile hf;
     private TransactionId tid;

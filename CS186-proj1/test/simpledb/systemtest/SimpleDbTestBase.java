@@ -1,14 +1,14 @@
 package simpledb.systemtest;
 
 import org.junit.Before;
-
-import simpledb.Database;
+import simpledb.simpledb.*;
 
 /**
  * Base class for all SimpleDb test classes. 
  * @author nizam
  *
  */
+
 public class SimpleDbTestBase {
 	/**
 	 * Reset the database before each test is run.

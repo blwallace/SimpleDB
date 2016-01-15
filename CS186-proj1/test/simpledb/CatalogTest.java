@@ -13,7 +13,7 @@ import org.junit.Test;
 import simpledb.TestUtil.SkeletonFile;
 import simpledb.systemtest.SimpleDbTestBase;
 import simpledb.systemtest.SystemTestUtil;
-
+import simpledb.simpledb.*;
 public class CatalogTest extends SimpleDbTestBase {
     private static String name = "test";
 	private String nameThisTestRun;
