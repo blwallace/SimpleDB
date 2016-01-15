@@ -130,9 +130,12 @@ public class TupleDesc implements Serializable {
      * @throws NoSuchElementException
      *             if no field with a matching name is found.
      */
-    public int fieldNameToIndex(String name) throws NoSuchElementException {
+    public int fieldNameToIndex(String name) throws NoSuchElementException{
+        if(name == null || _fieldAr == null){
+            throw new NoSuchElementException();
+        }
        for(int i = 0; i < _fieldAr.length; i++) {
-           if (_fieldAr[i] == name) {
+           if (_fieldAr[i].matches(name)) {
                return i;
            }
        }
@@ -144,7 +147,12 @@ public class TupleDesc implements Serializable {
      *         Note that tuples from a given TupleDesc are of a fixed size.
      */
     public int getSize() {
-        return _typeAr[0].getLen();
+        int total = 0;
+        for(int i = 0; i < this.numFields(); i++)
+        {
+            total += this.getFieldType(i).getLen();
+        }
+        return total;
     }
 
     /**
@@ -160,19 +168,24 @@ public class TupleDesc implements Serializable {
     public static TupleDesc merge(TupleDesc td1, TupleDesc td2) {
         // we need to create  anew tuple. lets first find the length
         int length = td1.numFields() + td2.numFields();
+        int len1 = td1.numFields();
+        int len2 = td2.numFields();
 
         // create new variables for the new
         Type[] typeAr = new Type[length];
         String[] fieldAr = new String[length];
 
-        //build new tuple
-        for(int i = 0; i < td1.numFields(); i++){
-            typeAr[i] = td1.getFieldType(i);
-            fieldAr[i] = td1.getFieldName(i);
+        int ticker = 0;
+        //build new tupledesc
+        for(int i = 0; i < len1; i++){
+            typeAr[ticker] = td1.getFieldType(i);
+            fieldAr[ticker] = td1.getFieldName(i);
+            ticker++;
         }
-        for(int j = td1.numFields(); j < length; j++){
-            typeAr[j] = td1.getFieldType(j);
-            fieldAr[j] = td1.getFieldName(j);
+        for(int j = 0; j < len2; j++){
+            typeAr[ticker] = td2.getFieldType(j);
+            fieldAr[ticker] = td2.getFieldName(j);
+            ticker++;
         }
 
         return new TupleDesc(typeAr,fieldAr);
@@ -187,8 +200,11 @@ public class TupleDesc implements Serializable {
      *            the Object to be compared for equality with this TupleDesc.
      * @return true if the object is equal to this TupleDesc.
      */
-    public boolean equals(Object o) {
-        if(this == o){
+    public boolean equals(TupleDesc o) {
+        if(o == null){
+            return false;
+        }
+        else if(this.numFields() == o.numFields() && this.getSize() == o.getSize()){
             return true;
         }
         else
@@ -209,7 +225,16 @@ public class TupleDesc implements Serializable {
      * @return String describing this descriptor.
      */
     public String toString() {
-        // some code goes here
-        return "";
+        String string = "";
+        if (_fieldAr == null) {
+            for (int i = 0; i < this.numFields(); i++) {
+                string += this.getFieldType(i) + "[" + i + "]";
+            }
+        } else {
+            for (int i = 0; i < this.numFields(); i++) {
+                string += this.getFieldType(i) + "[" + i + "]" + "(" + this.getFieldName(i) + i + ")";
+            }
+        }
+        return string;
     }
 }
