@@ -19,12 +19,17 @@ import java.util.UUID;
 
 public class Catalog {
 
+    //creates a list of all tables
+    ArrayList<Table> tables;
+    //keeps track of the numberof tables
+    int _tableNum;
+
     /**
      * Constructor.
      * Creates a new, empty catalog.
      */
     public Catalog() {
-        // some code goes here
+        tables = new ArrayList<>();
     }
 
     /**
@@ -37,7 +42,13 @@ public class Catalog {
      * conflict exists, use the last table to be added as the table for a given name.
      */
     public void addTable(DbFile file, String name, String pkeyField) {
-        // some code goes here
+        Table tb = new Table(file.getId(),file,name,pkeyField);
+
+        //increases the id for tablenum
+        _tableNum++;
+
+        //adds a new table
+        tables.add(tb);
     }
 
     public void addTable(DbFile file, String name) {
@@ -60,8 +71,21 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public int getTableId(String name) throws NoSuchElementException {
-        // some code goes here
-        return 0;
+
+        if(name == null){
+            throw new NoSuchElementException();
+        }
+
+        Iterator iterator = tables.iterator();
+        Table selected;
+        while(iterator.hasNext())
+        {
+            selected = (Table)iterator.next();
+            if(selected.get_name().matches(name)){
+                return selected.get_tableID();
+            }
+        }
+        throw  new NoSuchElementException();
     }
 
     /**
@@ -72,7 +96,17 @@ public class Catalog {
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
         // some code goes here
-        return null;
+
+        Iterator iterator = tables.iterator();
+        Table selected;
+        while(iterator.hasNext())
+        {
+            selected = (Table)iterator.next();
+            if(selected.get_tableID() == tableid){
+            return selected.get_tupleDesc();
+        }
+        }
+        throw  new NoSuchElementException();
     }
 
     /**
@@ -82,28 +116,52 @@ public class Catalog {
      *     function passed to addTable
      */
     public DbFile getDbFile(int tableid) throws NoSuchElementException {
-        // some code goes here
-        return null;
+        Iterator iterator = tables.iterator();
+        Table selected;
+        while(iterator.hasNext())
+        {
+            selected = (Table)iterator.next();
+            if(selected.get_tableID() == tableid){
+                return selected.get_file();
+            }
+        }
+        throw  new NoSuchElementException();
     }
 
     public String getPrimaryKey(int tableid) {
-        // some code goes here
-        return null;
+        Iterator iterator = tables.iterator();
+        Table selected;
+        while(iterator.hasNext())
+        {
+            selected = (Table)iterator.next();
+            if(selected.get_tableID() == tableid){
+                return selected.get_pkeyField();
+            }
+        }
+        throw  new NoSuchElementException();
     }
 
     public Iterator<Integer> tableIdIterator() {
-        // some code goes here
         return null;
     }
 
-    public String getTableName(int id) {
-        // some code goes here
-        return null;
+    public String getTableName(int tableid) {
+        Iterator iterator = tables.iterator();
+        Table selected;
+        while(iterator.hasNext())
+        {
+            selected = (Table)iterator.next();
+            if(selected.get_tableID() == tableid){
+                return selected.get_name();
+            }
+        }
+        throw  new NoSuchElementException();
     }
     
     /** Delete all tables from the catalog */
     public void clear() {
-        // some code goes here
+        tables = new ArrayList<>();
+        _tableNum = 0;
     }
     
     /**
