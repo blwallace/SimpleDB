@@ -29,7 +29,7 @@ public class Catalog {
      * Creates a new, empty catalog.
      */
     public Catalog() {
-        tables = new ArrayList<>();
+        tables = new ArrayList<Table>();
     }
 
     /**
@@ -160,7 +160,7 @@ public class Catalog {
     
     /** Delete all tables from the catalog */
     public void clear() {
-        tables = new ArrayList<>();
+        tables = new ArrayList<Table>();
         _tableNum = 0;
     }
     
