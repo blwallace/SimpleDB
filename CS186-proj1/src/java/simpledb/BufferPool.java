@@ -12,6 +12,16 @@ import java.io.IOException;
  * locks to read/write the page.
  */
 public class BufferPool {
+
+    // private global variables. _numpages is dicated when object is created
+    private int _numPages;
+    private Page[] _bufferPool;
+
+    private TransactionId _tid;
+    private PageId _pid;
+    private Permissions _perm;
+
+
     /** Bytes per page, including header. */
     public static final int PAGE_SIZE = 4096;
 
@@ -26,7 +36,9 @@ public class BufferPool {
      * @param numPages maximum number of pages in this buffer pool.
      */
     public BufferPool(int numPages) {
-        // some code goes here
+        _numPages = numPages;
+        //create a new bufferpool on memory _numPages long
+        _bufferPool = new Page[_numPages];
     }
 
     /**
@@ -46,8 +58,38 @@ public class BufferPool {
      */
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
+
+        //method variable. indicates if _bufferpool is overloaded
+        boolean full = false;
+        Page page = null;
+
+        //search through bufferpool for pageID.returns page if found
+        for(int i = 0; i < _numPages; i++){
+            if(i == _numPages - 1){
+                full = true;
+            }
+            if(_bufferPool[i].getId().equals(pid)){
+                return _bufferPool[i];
+            }
+        }
+
+        //if buffer pool is full, swap out another page. for now we do last in, first out
+        if(full == true){
+            _bufferPool[0] = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
+            page = _bufferPool[0];
+        }
+        //else find an empty page in the bufferpool and put new page there
+        else{
+            for(int i = 0; i < _bufferPool.length; i++){
+                if(_bufferPool[i] == null){
+                    _bufferPool[i] = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
+                    page = _bufferPool[i];
+                }
+
+            }
+        }
+
+        return page;
     }
 
     /**
