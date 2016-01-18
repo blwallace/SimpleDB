@@ -340,6 +340,13 @@ public class HeapPage implements Page {
                 }
                 throw new NullPointerException();
             }
+
+            @Override
+
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+
             //finds next available tuple
             public int search(){
                 int i = ticker + 1;
