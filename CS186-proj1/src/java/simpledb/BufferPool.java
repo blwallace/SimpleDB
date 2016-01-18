@@ -92,6 +92,11 @@ public class BufferPool {
         return page;
     }
 
+    //returns bufferpage size
+    public int getPageSize(){
+        return PAGE_SIZE;
+    }
+
     /**
      * Releases the lock on a page.
      * Calling this is very risky, and may result in wrong behavior. Think hard

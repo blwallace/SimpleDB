@@ -52,13 +52,15 @@ public class HeapPageId implements PageId {
      *   ids are the same)
      */
     public boolean equals(Object o) {
-        if(_pgNo == Integer.parseInt(o.toString())){
+        if(!(o instanceof PageId)){
+            return false;
+        }
+        else if(_pgNo == ((PageId) o).pageNumber()){
             return true;
         }
         else{
             return false;
         }
-
     }
 
     /**

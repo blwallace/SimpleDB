@@ -48,7 +48,15 @@ public class RecordId implements Serializable {
      */
     @Override
     public boolean equals(Object o) {
-        if(this == o){
+        // must be a record ID
+        if(!(o instanceof RecordId)){
+            return false;
+        }
+        else if(this._tupleno == ((RecordId) o).tupleno() ){
+            //if record ID and table ID are different, teh two records are different
+            if(this.getPageId().getTableId() != ((RecordId) o).getPageId().getTableId()){
+                return false;
+            }
             return true;
         }
         else{
@@ -64,8 +72,11 @@ public class RecordId implements Serializable {
      */
     @Override
     public int hashCode() {
+        //needs to account for negative numbers
         int i = _pid.hashCode();
-        return Integer.parseInt("" + _tupleno + i);
+        String hashcode = "" + Math.abs(_tupleno) + Math.abs(i);
+        Integer j = Integer.parseInt(hashcode);
+        return j.intValue();
 
     }
 

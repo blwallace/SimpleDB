@@ -16,6 +16,10 @@ import java.util.ArrayList;
  */
 public class HeapFile implements DbFile {
 
+    //private variables for object
+    File _f;
+    TupleDesc _td;
+
     /**
      * Constructs a heap file backed by the specified file.
      * 
@@ -24,7 +28,10 @@ public class HeapFile implements DbFile {
      *            file.
      */
     public HeapFile(File f, TupleDesc td) {
-        // some code goes here
+        //load global variables
+        _f = f;
+        _td = td;
+
     }
 
     /**
@@ -34,7 +41,7 @@ public class HeapFile implements DbFile {
      */
     public File getFile() {
         // some code goes here
-        return null;
+        return _f;
     }
 
     /**
@@ -48,7 +55,7 @@ public class HeapFile implements DbFile {
      */
     public int getId() {
         // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        return _f.getAbsoluteFile().hashCode();
     }
 
     /**
@@ -57,8 +64,7 @@ public class HeapFile implements DbFile {
      * @return TupleDesc of this DbFile.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        throw new UnsupportedOperationException("implement this");
+        return _td;
     }
 
     // see DbFile.java for javadocs
