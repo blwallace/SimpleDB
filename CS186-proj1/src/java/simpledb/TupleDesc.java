@@ -200,11 +200,11 @@ public class TupleDesc implements Serializable {
      *            the Object to be compared for equality with this TupleDesc.
      * @return true if the object is equal to this TupleDesc.
      */
-    public boolean equals(TupleDesc o) {
+    public boolean equals(Object o) {
         if(o == null){
             return false;
         }
-        else if(this.numFields() == o.numFields() && this.getSize() == o.getSize()){
+        else if(this.numFields() == ((TupleDesc) o).numFields() && this.getSize() == ((TupleDesc) o).getSize()){
             return true;
         }
         else

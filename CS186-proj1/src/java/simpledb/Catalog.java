@@ -95,7 +95,6 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-        // some code goes here
 
         Iterator iterator = tables.iterator();
         Table selected;

@@ -57,7 +57,7 @@ public class BufferPool {
      * @param perm the requested permissions on the page
      */
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
-        throws TransactionAbortedException, DbException {
+            throws TransactionAbortedException, DbException, IOException {
 
         //method variable. indicates if _bufferpool is overloaded
         boolean full = false;
