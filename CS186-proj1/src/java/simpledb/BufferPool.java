@@ -59,37 +59,24 @@ public class BufferPool {
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException, IOException {
 
-        //method variable. indicates if _bufferpool is overloaded
-        boolean full = false;
-        Page page = null;
-
-        //search through bufferpool for pageID.returns page if found
-        for(int i = 0; i < _numPages; i++){
-            if(i == _numPages - 1){
-                full = true;
-            }
-            if(_bufferPool[i].getId().equals(pid)){
-                return _bufferPool[i];
-            }
-        }
-
-        //if buffer pool is full, swap out another page. for now we do last in, first out
-        if(full == true){
-            _bufferPool[0] = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
-            page = _bufferPool[0];
-        }
-        //else find an empty page in the bufferpool and put new page there
-        else{
-            for(int i = 0; i < _bufferPool.length; i++){
-                if(_bufferPool[i] == null){
-                    _bufferPool[i] = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
-                    page = _bufferPool[i];
+        int i;
+        Page page;
+        // look in bufferpool to see if page is present
+        for(i = 0; i < _numPages; i++){
+            if(_bufferPool[i] != null){
+                //if we find our page
+                if(_bufferPool[i].getId() == pid){
+                    return _bufferPool[i];
                 }
+            }
+            else if(_bufferPool[i] == null){
 
+               return _bufferPool[i] = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
             }
         }
+        //if buffer pool is full, we replace the last one in (item i)
+        return _bufferPool[i-1] = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
 
-        return page;
     }
 
     //returns bufferpage size

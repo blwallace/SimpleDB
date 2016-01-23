@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
@@ -22,6 +23,7 @@ public class HeapFile implements DbFile {
     //private variables for object
     File _f;
     TupleDesc _td;
+    HeapFile _hf;
 
     /**
      * Constructs a heap file backed by the specified file.
@@ -34,6 +36,7 @@ public class HeapFile implements DbFile {
         //load global variables
         _f = f;
         _td = td;
+        _hf = get_hf();
 
     }
 
@@ -160,6 +163,10 @@ public class HeapFile implements DbFile {
         return (Database.getBufferPool().getPageSize() * 8) / (_td.getSize()*8 + 1);
     }
 
+    private HeapFile get_hf(){
+        return this;
+    }
+
     /**
      * Computes the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
@@ -171,22 +178,35 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public DbFileIterator iterator(TransactionId tid) {
         return new DbFileIterator() {
-            //keeps track of the tuple
-            int tickerTuple;
-            //keeps track of the header
-            int tickerHeader;
-            // record keeping
-            int numTuples = getNumTuples();
-            int headSize = getHeaderSize();
 
+            // stores iterator variables
+            HeapPageId heapPageID;
+            Iterator<Tuple> tupleIterator;
+            //get page count
+
+            int pageCount = (int) Math.ceil(_f.length() / Database.getBufferPool().getPageSize());
+
+            //keeps track of the tuple count
+            int tickerTuple = 0;
+            //keeps track if our iterator is open
             boolean open = false;
+            int pageTicker;
+
 
 
             @Override
             public void open() throws DbException, TransactionAbortedException {
                 open = true;
-                tickerHeader = 0;
-                tickerTuple = (int) Math.ceil(getHeaderSize() / 8);
+                pageTicker = 0;
+                //hacky way to get an instance of our heappage.
+                //we need this to extract tuples
+                heapPageID = new HeapPageId(_hf.getId(),tickerTuple);
+                try {
+                    HeapPage heapPage = (HeapPage) Database.getBufferPool().getPage(tid,heapPageID,Permissions.READ_ONLY);
+                    tupleIterator =  heapPage.iterator();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
 
             }
 
@@ -195,47 +215,58 @@ public class HeapFile implements DbFile {
                 if(open == false){
                     return false;
                 }
-                int i = tickerHeader;
-                while(i < numTuples){
-                    if(i == 1){
-                        return true;
-                    }
-                    i++;
+                if(!tupleIterator.hasNext()){
+                    tupleIterator = null;
                 }
-                return false;
+                //we now need to search through the pages
+                while(pageTicker < 5 && tupleIterator == null){
+                    pageTicker++;
+
+
+                    heapPageID = new HeapPageId(_hf.getId(),pageTicker);
+                    try {
+                        HeapPage heapPage = (HeapPage) Database.getBufferPool().getPage(tid,heapPageID,Permissions.READ_ONLY);
+                        tupleIterator =  heapPage.iterator();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    if(!tupleIterator.hasNext()){
+                        tupleIterator = null;
+                    }
+                }
+                if(tupleIterator == null){
+                    return false;
+                }
+                return tupleIterator.hasNext();
             }
+
+
 
             @Override
             public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException {
-                if(open == false || !hasNext()) {
+
+                if(!hasNext()) {
                     throw new NoSuchElementException();
                 }
                 else{
-                    // read fields in the tuple
-                    Tuple t = new Tuple(_td);
-                    try {
-                        for (int j=0; j<_td.numFields(); j++) {
-                            Field f = _td.getFieldType(j).parse(dis);
-                            t.setField(j, f);
-                        }
-                    } catch (java.text.ParseException e) {
-                        e.printStackTrace();
-                        throw new NoSuchElementException("parsing error!");
-                    }
-
-                    return t;
-
+                    return tupleIterator.next();
                 }
-                return null;
+
             }
 
             @Override
             public void rewind() throws DbException, TransactionAbortedException {
-
+                tickerTuple = 0;
             }
 
             @Override
             public void close() {
+                open = false;
+                tickerTuple = 0;
+            }
+
+            @Override
+            public void remove() {
 
             }
 

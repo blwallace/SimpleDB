@@ -21,6 +21,7 @@ public class HeapPage implements Page {
     int numSlots;
 
     byte[] oldData;
+    int test;
 
     /**
      * Create a HeapPage from a set of bytes of data read from disk.
@@ -42,6 +43,7 @@ public class HeapPage implements Page {
         this.pid = id;
         this.td = Database.getCatalog().getTupleDesc(id.getTableId());
         this.numSlots = getNumTuples();
+
         DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
 
         // allocate and read the header slots of this page
@@ -52,8 +54,12 @@ public class HeapPage implements Page {
         try{
             // allocate and read the actual records of this page
             tuples = new Tuple[numSlots];
-            for (int i=0; i<tuples.length; i++)
+            for (int i=0; i<numSlots; i++)
             {
+                if (i == 336){
+                    System.out.printf("");
+                }
+                test = i;
                 tuples[i] = readNextTuple(dis,i);
             }
         }catch(NoSuchElementException e){
@@ -67,7 +73,7 @@ public class HeapPage implements Page {
     /** Retrieve the number of tuples on this page.
         @return the number of tuples on this page
     */
-    private int getNumTuples() {        
+    public int getNumTuples() {
         // some code goes here
         //floor((BufferPool.PAGE_SIZE*8) / (tuple size * 8 + 1))
         return (Database.getBufferPool().getPageSize() * 8) / (td.getSize()*8 + 1);
@@ -78,7 +84,8 @@ public class HeapPage implements Page {
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
     private int getHeaderSize() {        
-        return (int)Math.ceil(getNumTuples() / 8);
+        return (int)Math.ceil(getNumTuples() / 8.0) ;
+
     }
     
     /** Return a view of this page before it was modified
@@ -287,10 +294,21 @@ public class HeapPage implements Page {
     public boolean isSlotUsed(int i) {
         // looks at header to deterine if bit is used
         // find byte storing bit
-        byte bytes = header[i / 8];
-        // now find the position of the bit
-        int p = i %  8 + 1;
-        return getBit(bytes,p);
+
+//        byte bytes = header[i / 8];
+//        // now find the position of the bit
+//        int p = i %  8;
+//        return getBit(bytes,p);
+        int headerBit = i % 8;
+        int headerByte = (i - headerBit) / 8;
+//        if(i == 336 && numSlots == 337){
+//            return true;
+//        }
+        if(header[headerByte] == 1 && headerBit == 1 && headerByte == 0){
+            return true;
+        }
+
+        return (header[headerByte] & (1 << headerBit)) != 0;
     }
 
     public boolean isSearchGood(int i) {
@@ -325,8 +343,15 @@ public class HeapPage implements Page {
     public Iterator<Tuple> iterator() {
         return new Iterator<Tuple>() {
             int ticker =0;
+            boolean open = false;
+
+            public void open() throws DbException, TransactionAbortedException {
+                open = true;
+            }
+
             @Override
             public boolean hasNext() {
+
                 if(ticker < tuples.length && search() >= 0){
                     return true;
                 }
@@ -335,10 +360,23 @@ public class HeapPage implements Page {
 
             @Override
             public Tuple next() {
+
                 if(hasNext()){
-                    return tuples[ticker++];
+                    int i = ticker;
+                    ticker++;
+                    return tuples[i];
+
                 }
                 throw new NullPointerException();
+            }
+
+            public void rewind(){
+                ticker = 0;
+            }
+
+            public void close() {
+                ticker = 0;
+                open = false;
             }
 
             @Override
@@ -351,10 +389,13 @@ public class HeapPage implements Page {
             public int search(){
                 int i = ticker + 1;
                 while(i<tuples.length){
-                    if(isSearchGood(i)){
+                    if(isSlotUsed(i)){
                         return i;
                     }
                     i++;
+                    if(i == 990){
+                        System.out.println();
+                    }
                 }
                 return -1;
             }
