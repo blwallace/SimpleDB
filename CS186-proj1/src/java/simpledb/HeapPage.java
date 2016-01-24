@@ -370,6 +370,10 @@ public class HeapPage implements Page {
                 ticker++;
                 return tuple;
             }
+
+            public void remove(){
+                
+            }
         };
                 return tupleIterator;
     }
