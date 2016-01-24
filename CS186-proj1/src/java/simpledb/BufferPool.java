@@ -1,6 +1,7 @@
 package simpledb;
 
 import java.io.IOException;
+import java.util.HashMap;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -15,7 +16,7 @@ public class BufferPool {
 
     // private global variables. _numpages is dicated when object is created
     private int _numPages;
-    private Page[] _bufferPool;
+    private HashMap<PageId, Page> _bufferPool;
 
     private TransactionId _tid;
     private PageId _pid;
@@ -38,7 +39,7 @@ public class BufferPool {
     public BufferPool(int numPages) {
         _numPages = numPages;
         //create a new bufferpool on memory _numPages long
-        _bufferPool = new Page[_numPages];
+        _bufferPool = new HashMap<>();
     }
 
     /**
@@ -62,20 +63,12 @@ public class BufferPool {
         int i;
         Page page;
         // look in bufferpool to see if page is present
-        for(i = 0; i < _numPages; i++){
-            if(_bufferPool[i] != null){
-                //if we find our page
-                if(_bufferPool[i].getId() == pid){
-                    return _bufferPool[i];
-                }
-            }
-            else if(_bufferPool[i] == null){
-
-               return _bufferPool[i] = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
-            }
-        }
-        //if buffer pool is full, we replace the last one in (item i)
-        return _bufferPool[i-1] = Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid);
+       if(!_bufferPool.containsKey(pid)){
+           if(_bufferPool.size() < _numPages){
+               _bufferPool.put(pid, Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid));
+           }
+       }
+        return _bufferPool.get(pid);
 
     }
 

@@ -40,7 +40,7 @@ public class HeapPageId implements PageId {
      */
     public int hashCode() {
         // some code goes here
-        String cat = "" + _tableId + _pgNo;
+        String cat = "" + Math.abs(_tableId) + _pgNo;
         return Integer.parseInt(cat);
     }
 

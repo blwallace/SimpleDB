@@ -14,7 +14,7 @@ import java.util.NoSuchElementException;
  * size, and the file is simply a collection of those pages. HeapFile works
  * closely with HeapPage. The format of HeapPages is described in the HeapPage
  * constructor.
- * 
+ *
  * @see simpledb.HeapPage#HeapPage
  * @author Sam Madden
  */
@@ -23,30 +23,26 @@ public class HeapFile implements DbFile {
     //private variables for object
     File _f;
     TupleDesc _td;
-    HeapFile _hf;
+
 
     /**
      * Constructs a heap file backed by the specified file.
-     * 
+     *
      * @param f
      *            the file that stores the on-disk backing store for this heap
      *            file.
      */
     public HeapFile(File f, TupleDesc td) {
-        //load global variables
         _f = f;
         _td = td;
-        _hf = get_hf();
-
     }
 
     /**
      * Returns the File backing this HeapFile on disk.
-     * 
+     *
      * @return the File backing this HeapFile on disk.
      */
     public File getFile() {
-        // some code goes here
         return _f;
     }
 
@@ -56,17 +52,18 @@ public class HeapFile implements DbFile {
      * HeapFile has a "unique id," and that you always return the same value for
      * a particular HeapFile. We suggest hashing the absolute file name of the
      * file underlying the heapfile, i.e. f.getAbsoluteFile().hashCode().
-     * 
+     *
      * @return an ID uniquely identifying this HeapFile.
      */
+    //i had to get help on this part
     public int getId() {
         // some code goes here
-        return _f.getAbsoluteFile().hashCode();
+        return Math.abs( _f.getAbsoluteFile().hashCode()) % 10000000;
     }
 
     /**
      * Returns the TupleDesc of the table stored in this DbFile.
-     * 
+     *
      * @return TupleDesc of this DbFile.
      */
     public TupleDesc getTupleDesc() {
@@ -132,10 +129,7 @@ public class HeapFile implements DbFile {
      * Returns the number of pages in this HeapFile.
      */
     public int numPages() {
-        //number of pages is the file size divided by the page size
-        long pageSize = _f.length() / Database.getBufferPool().getPageSize();
-        return (int) pageSize;
-
+        return (int) Math.ceil(_f.length()/ BufferPool.PAGE_SIZE);
     }
 
     // see DbFile.java for javadocs
@@ -154,45 +148,19 @@ public class HeapFile implements DbFile {
         // not necessary for proj1
     }
 
-    /** Retrieve the number of tuples on this page.
-     @return the number of tuples on this page
-     */
-    private int getNumTuples() {
-        // some code goes here
-        //floor((BufferPool.PAGE_SIZE*8) / (tuple size * 8 + 1))
-        return (Database.getBufferPool().getPageSize() * 8) / (_td.getSize()*8 + 1);
-    }
-
-    private HeapFile get_hf(){
-        return this;
-    }
-
-    /**
-     * Computes the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
-     * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
-     */
-    private int getHeaderSize() {
-        return (int)Math.ceil(getNumTuples() / 8);
-    }
-
     // see DbFile.java for javadocs
     public DbFileIterator iterator(TransactionId tid) {
-        return new DbFileIterator() {
-
+        // some code goes here
+        DbFileIterator dbIterate = new DbFileIterator() {
             // stores iterator variables
             HeapPageId heapPageID;
             Iterator<Tuple> tupleIterator;
-            //get page count
-
-            int pageCount = (int) Math.ceil(_f.length() / Database.getBufferPool().getPageSize());
-
             //keeps track of the tuple count
             int tickerTuple = 0;
             //keeps track if our iterator is open
             boolean open = false;
-            int pageTicker;
-
-
+            int pageTicker = 0;
+            HeapPage heapPage;
 
             @Override
             public void open() throws DbException, TransactionAbortedException {
@@ -200,9 +168,9 @@ public class HeapFile implements DbFile {
                 pageTicker = 0;
                 //hacky way to get an instance of our heappage.
                 //we need this to extract tuples
-                heapPageID = new HeapPageId(_hf.getId(),tickerTuple);
+                heapPageID = new HeapPageId(getId(),pageTicker);
                 try {
-                    HeapPage heapPage = (HeapPage) Database.getBufferPool().getPage(tid,heapPageID,Permissions.READ_ONLY);
+                    heapPage = (HeapPage) Database.getBufferPool().getPage(tid,heapPageID,Permissions.READ_ONLY);
                     tupleIterator =  heapPage.iterator();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -212,69 +180,72 @@ public class HeapFile implements DbFile {
 
             @Override
             public boolean hasNext() throws DbException, TransactionAbortedException {
-                if(open == false){
+                boolean foundPage = false;
+
+                if(!open){
                     return false;
                 }
-                if(!tupleIterator.hasNext()){
-                    tupleIterator = null;
-                }
-                //we now need to search through the pages
-                while(pageTicker < 5 && tupleIterator == null){
-                    pageTicker++;
-
-
-                    heapPageID = new HeapPageId(_hf.getId(),pageTicker);
-                    try {
-                        HeapPage heapPage = (HeapPage) Database.getBufferPool().getPage(tid,heapPageID,Permissions.READ_ONLY);
-                        tupleIterator =  heapPage.iterator();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                    if(!tupleIterator.hasNext()){
-                        tupleIterator = null;
-                    }
-                }
-                if(tupleIterator == null){
+                else if(heapPage == null){
                     return false;
                 }
-                return tupleIterator.hasNext();
+
+                if(tupleIterator.hasNext()){
+                    return true;
+                }
+                // if current page is full, we need to iterate through the rest of the pages
+                else{
+                   while(foundPage){
+                       pageTicker++;
+                       try {
+                           heapPage = (HeapPage) Database.getBufferPool().getPage(tid,heapPageID,Permissions.READ_ONLY);
+                           tupleIterator = heapPage.iterator();
+                           if(tupleIterator.hasNext()){
+                               return true;
+                           }
+                       } catch (IOException e) {
+                           e.printStackTrace();
+                       }
+                   }
+                }
+                return false;
             }
-
-
 
             @Override
             public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException {
-
-                if(!hasNext()) {
+                if(!open){
+                   throw new NoSuchElementException();
+                }
+                else if(heapPage == null){
                     throw new NoSuchElementException();
                 }
-                else{
+
+                if(tupleIterator.hasNext()){
                     return tupleIterator.next();
                 }
-
+                else{
+                    throw new NoSuchElementException();
+                }
             }
 
             @Override
             public void rewind() throws DbException, TransactionAbortedException {
-                tickerTuple = 0;
+                open();
+
             }
 
             @Override
             public void close() {
                 open = false;
-                tickerTuple = 0;
+                pageTicker = 0;
             }
 
             @Override
             public void remove() {
 
             }
-
-
         };
+                return dbIterate;
     }
-
-
 
 }
 

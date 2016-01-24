@@ -21,7 +21,6 @@ public class HeapPage implements Page {
     int numSlots;
 
     byte[] oldData;
-    int test;
 
     /**
      * Create a HeapPage from a set of bytes of data read from disk.
@@ -43,7 +42,6 @@ public class HeapPage implements Page {
         this.pid = id;
         this.td = Database.getCatalog().getTupleDesc(id.getTableId());
         this.numSlots = getNumTuples();
-
         DataInputStream dis = new DataInputStream(new ByteArrayInputStream(data));
 
         // allocate and read the header slots of this page
@@ -54,14 +52,8 @@ public class HeapPage implements Page {
         try{
             // allocate and read the actual records of this page
             tuples = new Tuple[numSlots];
-            for (int i=0; i<numSlots; i++)
-            {
-                if (i == 336){
-                    System.out.printf("");
-                }
-                test = i;
+            for (int i=0; i<tuples.length; i++)
                 tuples[i] = readNextTuple(dis,i);
-            }
         }catch(NoSuchElementException e){
             e.printStackTrace();
         }
@@ -71,11 +63,9 @@ public class HeapPage implements Page {
     }
 
     /** Retrieve the number of tuples on this page.
-        @return the number of tuples on this page
-    */
+     @return the number of tuples on this page
+     */
     public int getNumTuples() {
-        // some code goes here
-        //floor((BufferPool.PAGE_SIZE*8) / (tuple size * 8 + 1))
         return (Database.getBufferPool().getPageSize() * 8) / (td.getSize()*8 + 1);
     }
 
@@ -83,13 +73,14 @@ public class HeapPage implements Page {
      * Computes the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
-    private int getHeaderSize() {        
+    private int getHeaderSize() {
+
         return (int)Math.ceil(getNumTuples() / 8.0) ;
 
     }
-    
+
     /** Return a view of this page before it was modified
-        -- used by recovery */
+     -- used by recovery */
     public HeapPage getBeforeImage(){
         try {
             return new HeapPage(pid,oldData);
@@ -100,7 +91,7 @@ public class HeapPage implements Page {
         }
         return null;
     }
-    
+
     public void setBeforeImage() {
         oldData = getPageData().clone();
     }
@@ -109,7 +100,7 @@ public class HeapPage implements Page {
      * @return the PageId associated with this page.
      */
     public HeapPageId getId() {
-    return pid;
+        return pid;
     }
 
     /**
@@ -193,7 +184,7 @@ public class HeapPage implements Page {
                 Field f = tuples[i].getField(j);
                 try {
                     f.serialize(dos);
-                
+
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -262,7 +253,7 @@ public class HeapPage implements Page {
      */
     public void markDirty(boolean dirty, TransactionId tid) {
         // some code goes here
-	// not necessary for lab1
+        // not necessary for lab1
     }
 
     /**
@@ -270,62 +261,55 @@ public class HeapPage implements Page {
      */
     public TransactionId isDirty() {
         // some code goes here
-	// Not necessary for lab1
-        return null;      
+        // Not necessary for lab1
+        return null;
     }
 
     /**
      * Returns the number of empty slots on this page.
      */
     public int getNumEmptySlots() {
-        //loop through and tally all the empty bits in header
         int ticker = 0;
-        for(int i = 0; i < numSlots; i++){
-            if(!isSearchGood(i)){
-                ticker++;
+        for(int i = 0; i < header.length; i++){
+            String bitString = binaryStringConvert(header[i]);
+            //loop through the bit stirng
+            for(int j = 0; j < 8; j++){
+                if(bitTrue(j,bitString)){
+                    ticker++;
+                }
             }
         }
-        return ticker++;
+        return numSlots - ticker;
     }
+    // got this from here
+    //http://stackoverflow.com/questions/12310017/how-to-convert-a-byte-to-its-binary-string-representation
+    public String binaryStringConvert(Byte b){
+        String s = String.format("%8s", Integer.toBinaryString(b & 0xFF)).replace(' ', '0');
+        return s;
+    }
+
+    public boolean bitTrue(int i, String b){
+        int start = 7 - (i % 8);
+        int end = 7 -(i%8)+1;
+        if(b.substring(start,end).equals("1")){
+            return true;
+        }
+        return false;
+    }
+
 
     /**
      * Returns true if associated slot on this page is filled.
      */
     public boolean isSlotUsed(int i) {
-        // looks at header to deterine if bit is used
-        // find byte storing bit
-
-//        byte bytes = header[i / 8];
-//        // now find the position of the bit
-//        int p = i %  8;
-//        return getBit(bytes,p);
-        int headerBit = i % 8;
-        int headerByte = (i - headerBit) / 8;
-//        if(i == 336 && numSlots == 337){
-//            return true;
-//        }
-        if(header[headerByte] == 1 && headerBit == 1 && headerByte == 0){
+        //find correct byte
+        Byte headerByte = header[i/8];
+        String byteString = binaryStringConvert(headerByte);
+        if(bitTrue(i,byteString)){
             return true;
         }
+        else return false;
 
-        return (header[headerByte] & (1 << headerBit)) != 0;
-    }
-
-    public boolean isSearchGood(int i) {
-        // looks at header to deterine if bit is used
-        // find byte storing bit
-        byte bytes = header[i / 8];
-        // now find the position of the bit
-        int p = i %  8;
-        return getBit(bytes,p);
-    }
-
-    //http://stackoverflow.com/questions/4854207/get-a-specific-bit-from-byte
-    public boolean getBit(byte b, int bitNumber)
-
-    {
-        boolean bit = (b & (1 << bitNumber-1)) != 0;
-        return bit;
     }
 
     /**
@@ -341,67 +325,53 @@ public class HeapPage implements Page {
      * (note that this iterator shouldn't return tuples in empty slots!)
      */
     public Iterator<Tuple> iterator() {
-        return new Iterator<Tuple>() {
-            int ticker =0;
-            boolean open = false;
 
-            public void open() throws DbException, TransactionAbortedException {
-                open = true;
-            }
+        Iterator<Tuple> tupleIterator = new Iterator<Tuple>() {
+
+            //keeps track of the position
+            int ticker = 0;
 
             @Override
             public boolean hasNext() {
-
-                if(ticker < tuples.length && search() >= 0){
-                    return true;
+                // if we have more than the designated number of tuples, return false
+                if(ticker >= numSlots){
+                    return false;
                 }
-                else return false;
+                // loop throug the header and find a true
+                for(int i = ticker; i < numSlots; i++ ){
+                    if(isSlotUsed(i)){
+                        return true;
+                    }
+                }
+                return false;
             }
 
             @Override
             public Tuple next() {
-
-                if(hasNext()){
-                    int i = ticker;
-                    ticker++;
-                    return tuples[i];
-
+                int flag = 0;
+                Tuple tuple;
+                if(!hasNext()){
+                    throw new NoSuchElementException();
                 }
-                throw new NullPointerException();
-            }
-
-            public void rewind(){
-                ticker = 0;
-            }
-
-            public void close() {
-                ticker = 0;
-                open = false;
-            }
-
-            @Override
-
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-
-            //finds next available tuple
-            public int search(){
-                int i = ticker + 1;
-                while(i<tuples.length){
-                    if(isSlotUsed(i)){
-                        return i;
-                    }
-                    i++;
-                    if(i == 990){
-                        System.out.println();
+                //if we have a tuple at our current spot, return it
+                else if (isSlotUsed(ticker)) {
+                    flag = ticker;
+                }
+                // if we don't have something at our current spot, keep on searching
+                else{
+                    for(int i = ticker; i < numSlots; i++){
+                        if(isSlotUsed(i)){
+                            flag = i;
+                            break;
+                        }
                     }
                 }
-                return -1;
+                tuple = tuples[flag];
+                ticker++;
+                return tuple;
             }
-
-
         };
+                return tupleIterator;
     }
 
 }
