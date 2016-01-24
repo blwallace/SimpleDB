@@ -39,7 +39,7 @@ public class BufferPool {
     public BufferPool(int numPages) {
         _numPages = numPages;
         //create a new bufferpool on memory _numPages long
-        _bufferPool = new HashMap<PageId, Page>();
+        _bufferPool = new HashMap<>();
     }
 
     /**

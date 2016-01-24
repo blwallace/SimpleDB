@@ -40,5 +40,4 @@ public interface DbFileIterator<T> extends Serializable {
      */
     public void close();
 
-    void remove();
 }

@@ -151,6 +151,7 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public DbFileIterator iterator(TransactionId tid) {
         // some code goes here
+        final TransactionId _tid = tid;
         DbFileIterator dbIterate = new DbFileIterator() {
             // stores iterator variables
             HeapPageId heapPageID;
@@ -170,7 +171,7 @@ public class HeapFile implements DbFile {
                 //we need this to extract tuples
                 heapPageID = new HeapPageId(getId(),pageTicker);
                 try {
-                    heapPage = (HeapPage) Database.getBufferPool().getPage(tid,heapPageID,Permissions.READ_ONLY);
+                    heapPage = (HeapPage) Database.getBufferPool().getPage(_tid,heapPageID,Permissions.READ_ONLY);
                     tupleIterator =  heapPage.iterator();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -197,7 +198,7 @@ public class HeapFile implements DbFile {
                    while(foundPage){
                        pageTicker++;
                        try {
-                           heapPage = (HeapPage) Database.getBufferPool().getPage(tid,heapPageID,Permissions.READ_ONLY);
+                           heapPage = (HeapPage) Database.getBufferPool().getPage(_tid,heapPageID,Permissions.READ_ONLY);
                            tupleIterator = heapPage.iterator();
                            if(tupleIterator.hasNext()){
                                return true;
@@ -239,10 +240,7 @@ public class HeapFile implements DbFile {
                 pageTicker = 0;
             }
 
-            @Override
-            public void remove() {
 
-            }
         };
                 return dbIterate;
     }
