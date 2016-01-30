@@ -11,7 +11,6 @@ public class Filter extends Operator {
     private Predicate p;
     private DbIterator child;
     private DbIterator[] children;
-    private boolean open = false;
 
     /**
      * Constructor accepts a predicate to apply and a child operator to read
