@@ -110,10 +110,10 @@ public class Predicate implements Serializable {
      * @return true if the comparison is true, false otherwise.
      */
     public boolean filter(Tuple t) {
-        if(t.getField(field).compare(op,operand)){
-            return true;
-        }
-        return false;
+        //System.out.println(t.getField(field));
+        //System.out.println(op.toString());
+        //System.out.println(operand.toString());
+        return t.getField(field).compare(op,operand);
 
     }
 
