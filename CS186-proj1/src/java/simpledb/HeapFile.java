@@ -165,6 +165,8 @@ public class HeapFile implements DbFile {
 
             @Override
             public void open() throws DbException, TransactionAbortedException {
+                System.out.println("OPENED");
+
                 open = true;
                 pageTicker = 0;
                 //hacky way to get an instance of our heappage.

@@ -82,6 +82,7 @@ public class TupleDesc implements Serializable {
      */
     public TupleDesc(Type[] typeAr) {
         _typeAr = typeAr;
+        _fieldAr = new String[typeAr.length]; // Need an empty array at least
     }
 
     /**
@@ -166,6 +167,7 @@ public class TupleDesc implements Serializable {
      * @return the new TupleDesc
      */
     public static TupleDesc merge(TupleDesc td1, TupleDesc td2) {
+
         // we need to create  anew tuple. lets first find the length
         int length = td1.numFields() + td2.numFields();
         int len1 = td1.numFields();
@@ -178,13 +180,13 @@ public class TupleDesc implements Serializable {
         int ticker = 0;
         //build new tupledesc
         for(int i = 0; i < len1; i++){
-            typeAr[ticker] = td1.getFieldType(i);
-            fieldAr[ticker] = td1.getFieldName(i);
+            typeAr[ticker] = td1._typeAr[i];
+            fieldAr[ticker] = td1._fieldAr[i];
             ticker++;
         }
         for(int j = 0; j < len2; j++){
-            typeAr[ticker] = td2.getFieldType(j);
-            fieldAr[ticker] = td2.getFieldName(j);
+            typeAr[ticker] = td2._typeAr[j];
+            fieldAr[ticker] = td2._fieldAr[j];
             ticker++;
         }
 

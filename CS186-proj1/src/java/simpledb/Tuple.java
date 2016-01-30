@@ -111,7 +111,25 @@ public class Tuple implements Serializable {
      * */
     public Iterator<Field> fields()
     {
-        // some code goes here
-        return null;
+        Iterator<Field> it = new Iterator<Field>() {
+
+            private int currentIndex = 0;
+
+            @Override
+            public boolean hasNext() {
+                return currentIndex < _field.length && _field[currentIndex] != null;
+            }
+
+            @Override
+            public Field next() {
+                return _field[currentIndex++];
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+        return it;
     }
 }
