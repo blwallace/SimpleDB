@@ -58,7 +58,7 @@ public class Aggregate extends Operator {
         td = new TupleDesc(typeAr,fieldAr);
 
         // create our aggregator
-        if(td.getFieldType(afield) == Type.INT_TYPE){
+        if(child.getTupleDesc().getFieldType(afield) == Type.INT_TYPE){
             aggregator = new IntegerAggregator(gfield,td.getFieldType(gfield),afield,aop);
         }
         else{
