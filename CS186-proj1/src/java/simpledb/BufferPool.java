@@ -150,11 +150,7 @@ public class BufferPool {
      */
     public void deleteTuple(TransactionId tid, Tuple t)
             throws DbException, TransactionAbortedException {
-        try {
-            Database.getCatalog().getDbFile(t.getRecordId().getPageId().getTableId()).insertTuple(tid,t);
-        } catch (IOException e) {
-            throw new DbException("Table not found");
-        }
+        Database.getCatalog().getDbFile(t.getRecordId().getPageId().getTableId()).deleteTuple(tid, t);
     }
 
     /**
