@@ -1,10 +1,20 @@
 package simpledb;
 
+import java.io.IOException;
+
 /**
  * Inserts tuples read from the child operator into the tableid specified in the
  * constructor
  */
 public class Insert extends Operator {
+
+    TransactionId t;
+    DbIterator child;
+    int tableid;
+    // used to create our return tuple
+    TupleDesc td;
+    // used to return count total
+    int ticker;
 
     private static final long serialVersionUID = 1L;
 
@@ -21,26 +31,36 @@ public class Insert extends Operator {
      *             if TupleDesc of child differs from table into which we are to
      *             insert.
      */
-    public Insert(TransactionId t,DbIterator child, int tableid)
+    public Insert(TransactionId t, DbIterator child, int tableid)
             throws DbException {
-        // some code goes here
+        this.t = t;
+        this.child = child;
+        this.tableid = tableid;
+        // create a new tuple description.
+        //It returns a one field tuple containing the number of
+        // inserted records.
+        this.td = new TupleDesc(new Type[]{Type.INT_TYPE},new String[]{"Inserted Records"});
+        ticker = 0;
+
+
     }
 
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return td;
     }
 
     public void open() throws DbException, TransactionAbortedException {
-        // some code goes here
+        super.open();
+        child.open();
     }
 
     public void close() {
-        // some code goes here
+        super.close();
+        child.close();
     }
 
     public void rewind() throws DbException, TransactionAbortedException {
-        // some code goes here
+        child.rewind();
     }
 
     /**
@@ -57,7 +77,30 @@ public class Insert extends Operator {
      * @see BufferPool#insertTuple
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
-        // some code goes here
+        //create a tuple
+        Tuple tup = new Tuple(td);
+
+        // determine if we can insert a tuple from child
+        while(child.hasNext()){
+            try {
+                Database.getBufferPool().insertTuple(t,tableid,child.next());
+                ticker++;
+                tup.setField(0,new IntField(ticker));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return tup;
+    }
+
+    public Tuple next(){
+        try {
+            return fetchNext();
+        } catch (TransactionAbortedException e) {
+            e.printStackTrace();
+        } catch (DbException e) {
+            e.printStackTrace();
+        }
         return null;
     }
 
