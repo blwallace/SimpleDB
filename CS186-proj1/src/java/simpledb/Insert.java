@@ -15,6 +15,8 @@ public class Insert extends Operator {
     TupleDesc td;
     // used to return count total
     int ticker;
+    // boolean to determine if we did funciton multiple tiems
+    private boolean first_time;
 
     private static final long serialVersionUID = 1L;
 
@@ -41,6 +43,7 @@ public class Insert extends Operator {
         // inserted records.
         this.td = new TupleDesc(new Type[]{Type.INT_TYPE},new String[]{"Inserted Records"});
         ticker = 0;
+        first_time = true;
 
 
     }
@@ -63,6 +66,14 @@ public class Insert extends Operator {
         child.rewind();
     }
 
+    public boolean hasNext(){
+        if(ticker != 0 || !first_time){
+            return false;
+        }
+
+        return true;
+    }
+
     /**
      * Inserts tuples read from child into the tableid specified by the
      * constructor. It returns a one field tuple containing the number of
@@ -77,6 +88,11 @@ public class Insert extends Operator {
      * @see BufferPool#insertTuple
      */
     protected Tuple fetchNext() throws TransactionAbortedException, DbException {
+
+        //if opened mroe than once, return null
+        if(ticker != 0 || !first_time){
+            return null;
+        }
         //create a tuple
         Tuple tup = new Tuple(td);
 
@@ -85,11 +101,12 @@ public class Insert extends Operator {
             try {
                 Database.getBufferPool().insertTuple(t,tableid,child.next());
                 ticker++;
-                tup.setField(0,new IntField(ticker));
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+        tup.setField(0,new IntField(ticker));
+        first_time = false;
         return tup;
     }
 
