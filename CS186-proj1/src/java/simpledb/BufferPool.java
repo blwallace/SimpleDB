@@ -2,6 +2,8 @@ package simpledb;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -159,8 +161,12 @@ public class BufferPool {
      *     break simpledb if running in NO STEAL mode.
      */
     public synchronized void flushAllPages() throws IOException {
-        // some code goes here
-        // not necessary for proj1
+        // iterate through all files and flush pages
+        Iterator it = _bufferPool.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry pair = (Map.Entry)it.next();
+            flushPage((PageId) pair.getKey());
+        }
 
     }
 
@@ -179,8 +185,16 @@ public class BufferPool {
      * @param pid an ID indicating the page to flush
      */
     private synchronized  void flushPage(PageId pid) throws IOException {
-        // some code goes here
-        // not necessary for proj1
+        // we need to take a page out of the hashmap and print it to disk
+        // get page from hashmap, file from db
+        Page pg = _bufferPool.get(pid);
+        DbFile file = Database.getCatalog().getDbFile(pid.getTableId());
+
+        if(pg.isDirty() != null){
+            //update the log
+            Database.getLogFile().logWrite(pg.isDirty(),pg.getBeforeImage(),pg);
+        }
+        Database.getCatalog().getDbFile(pid.getTableId()).writePage(pg);
     }
 
     /** Write all pages of the specified transaction to disk.
