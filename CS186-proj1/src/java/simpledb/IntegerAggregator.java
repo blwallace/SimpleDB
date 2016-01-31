@@ -22,6 +22,9 @@ public class IntegerAggregator implements Aggregator {
 
     // create hashmaps to store aggregate values
     private HashMap<Field,Field> intFieldCount;
+    // This will be used for the average calculations
+    private HashMap<Field,Field> intAvgCount;
+    private HashMap<Field,Field> intSumCount;
     /**
      * Aggregate constructor
      *
@@ -43,7 +46,8 @@ public class IntegerAggregator implements Aggregator {
         this.afield = afield;
         this.what = what;
         this.intFieldCount = new HashMap<Field,Field>();
-        System.out.println("test");
+        this.intAvgCount = new HashMap<Field,Field>();
+        this.intSumCount = new HashMap<Field,Field>();
         this.avgTicker = 0;
         this.avgSum = 0;
         this.isOpen = false;
@@ -95,6 +99,9 @@ public class IntegerAggregator implements Aggregator {
         int tg = tga.getValue();
         int tv = tva.getValue();
 
+        //value of tuplegroup
+        IntField tupGValue = (IntField) intFieldCount.get(tupleGroup);
+
 
         switch(what){
             case MIN:
@@ -103,8 +110,8 @@ public class IntegerAggregator implements Aggregator {
                     intFieldCount.put(tupleGroup, new IntField(tupleValue.getValue()));
                 }
                 // if the current tuple is less than the current min, update the hashmap
-                else if(tg > tv){
-                        intFieldCount.put(tupleValue,new IntField(tupleValue.getValue()));
+                else if(tupGValue.getValue() > tv){
+                        intFieldCount.put(tupleGroup,new IntField(tupleValue.getValue()));
                 }
                 break;
             case MAX:
@@ -113,7 +120,7 @@ public class IntegerAggregator implements Aggregator {
                     intFieldCount.put(tupleGroup,new IntField(tupleValue.getValue()));
                 }
                 // if the current tuple is greater than the current min, update the hashmap
-                else if(tg < tv){
+                else if(tupGValue.getValue() < tv){
                     intFieldCount.put(tupleGroup,new IntField(tupleValue.getValue()));
                 }
                 break;
@@ -125,8 +132,7 @@ public class IntegerAggregator implements Aggregator {
                 }
                 // else we add our tupleValue to the existing tuple sum
                 else{
-                    avgSum += tupleValue.getValue();
-                    intFieldCount.put(tupleGroup,new IntField(avgSum));
+                    intFieldCount.put(tupleGroup,new IntField(tupGValue.getValue() + tv));
                 }
                 break;
             case AVG:
@@ -134,13 +140,23 @@ public class IntegerAggregator implements Aggregator {
                 if(intFieldCount.get(tupleGroup) == null){
                     avgSum = tupleValue.getValue();
                     intFieldCount.put(tupleGroup,new IntField(avgSum));
-                    avgTicker++;
+                    intAvgCount.put(tupleGroup,new IntField(1));
+                    intSumCount.put(tupleGroup,new IntField(avgSum));
                 }
                 // else we add our tupleValue to the existing tuple sum
                 else{
-                    avgTicker++;
-                    avgSum = avgSum + tupleValue.getValue();
-                    intFieldCount.put(tupleGroup,new IntField(avgSum/avgTicker));
+                    // we need to make calculations to find a enw average and maintain our hashtables
+                    IntField count = (IntField)intAvgCount.get(tupleGroup);
+                    IntField sum = (IntField)intSumCount.get(tupleGroup);
+
+                    int newCount = count.getValue() + 1;
+                    int newSum = sum.getValue() + tupleValue.getValue();
+                    int avg = newSum / newCount;
+
+                    intFieldCount.put(tupleGroup,new IntField(avg));
+                    intAvgCount.put(tupleGroup,new IntField(newCount));
+                    intSumCount.put(tupleGroup,new IntField(newSum));
+
                 }
                 break;
             case COUNT:
@@ -150,7 +166,7 @@ public class IntegerAggregator implements Aggregator {
                 }
                 // else we add 1 to the existing tuple sum
                 else{
-                    intFieldCount.put(tupleGroup,new IntField(tv + 1));
+                    intFieldCount.put(tupleGroup,new IntField(tupGValue.getValue() + 1));
                 }
                 break;
         }
@@ -172,7 +188,7 @@ public class IntegerAggregator implements Aggregator {
 
         while(iterator.hasNext()){
             Map.Entry pair = (Map.Entry)iterator.next();
-            System.out.println(pair.getKey() + " = " + pair.getValue());
+//            System.out.println(pair.getKey() + " = " + pair.getValue());
             Tuple tup = new Tuple(td);
             if(Aggregator.NO_GROUPING == gbfield){
                 tup.setField(0, (Field) pair.getValue());

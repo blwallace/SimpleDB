@@ -45,24 +45,36 @@ public class Aggregate extends Operator {
         // variables for our td and building our td
         Type[] typeAr;
         String[] fieldAr;
-        if(gfield != Aggregator.NO_GROUPING){
+        if(gfield == -1){
+            fieldAr = new String[]{child.getTupleDesc().getFieldName(afield)};
+            typeAr = new Type[]{Type.INT_TYPE};
+        }
+        else{
             Type groupType = child.getTupleDesc().getFieldType(gfield);
             String groupField = child.getTupleDesc().getFieldName(gfield);
             typeAr = new Type[]{groupType, Type.INT_TYPE};
             fieldAr = new String[]{groupField, child.getTupleDesc().getFieldName(afield)};
         }
-        else{
-            fieldAr = new String[]{child.getTupleDesc().getFieldName(afield)};
-            typeAr = new Type[]{Type.INT_TYPE};
-        }
         td = new TupleDesc(typeAr,fieldAr);
 
-        // create our aggregator
-        if(td.getFieldType(afield) == Type.INT_TYPE){
-            aggregator = new IntegerAggregator(gfield,td.getFieldType(gfield),afield,aop);
+        if(gfield == -1){
+            // create our aggregator
+            if(child.getTupleDesc().getFieldType(afield) == Type.INT_TYPE){
+                aggregator = new IntegerAggregator(gfield,null,afield,aop);
+            }
+            else{
+                aggregator = new StringAggregator(gfield,null,afield,aop);
+            }
         }
+
         else{
-            aggregator = new StringAggregator(gfield,td.getFieldType(gfield),afield,aop);
+            // create our aggregator
+            if(child.getTupleDesc().getFieldType(afield) == Type.INT_TYPE){
+                aggregator = new IntegerAggregator(gfield,td.getFieldType(gfield),afield,aop);
+            }
+            else{
+                aggregator = new StringAggregator(gfield,td.getFieldType(gfield),afield,aop);
+            }
         }
 
     }
