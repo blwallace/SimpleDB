@@ -18,17 +18,12 @@ public class BufferPool {
     private int _numPages;
     private HashMap<PageId, Page> _bufferPool;
 
-    private TransactionId _tid;
-    private PageId _pid;
-    private Permissions _perm;
-
-
     /** Bytes per page, including header. */
     public static final int PAGE_SIZE = 4096;
 
     /** Default number of pages passed to the constructor. This is used by
-    other classes. BufferPool should use the numPages argument to the
-    constructor instead. */
+     other classes. BufferPool should use the numPages argument to the
+     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
 
     /**
@@ -63,11 +58,11 @@ public class BufferPool {
         int i;
         Page page;
         // look in bufferpool to see if page is present
-       if(!_bufferPool.containsKey(pid)){
-           if(_bufferPool.size() < _numPages){
-               _bufferPool.put(pid, Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid));
-           }
-       }
+        if(!_bufferPool.containsKey(pid)){
+            if(_bufferPool.size() < _numPages){
+                _bufferPool.put(pid, Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid));
+            }
+        }
         return _bufferPool.get(pid);
 
     }
@@ -116,29 +111,28 @@ public class BufferPool {
      * @param commit a flag indicating whether we should commit or abort
      */
     public void transactionComplete(TransactionId tid, boolean commit)
-        throws IOException {
+            throws IOException {
         // some code goes here
         // not necessary for proj1
     }
 
     /**
      * Add a tuple to the specified table behalf of transaction tid.  Will
-     * acquire a write lock on the page the tuple is added to(Lock 
-     * acquisition is not needed for lab2). May block if the lock cannot 
+     * acquire a write lock on the page the tuple is added to(Lock
+     * acquisition is not needed for lab2). May block if the lock cannot
      * be acquired.
-     * 
+     *
      * Marks any pages that were dirtied by the operation as dirty by calling
-     * their markDirty bit, and updates cached versions of any pages that have 
-     * been dirtied so that future requests see up-to-date pages. 
+     * their markDirty bit, and updates cached versions of any pages that have
+     * been dirtied so that future requests see up-to-date pages.
      *
      * @param tid the transaction adding the tuple
      * @param tableId the table to add the tuple to
      * @param t the tuple to add
      */
     public void insertTuple(TransactionId tid, int tableId, Tuple t)
-        throws DbException, IOException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for proj1
+            throws DbException, IOException, TransactionAbortedException {
+        Database.getCatalog().getDbFile(tableId).insertTuple(tid,t);
     }
 
     /**
@@ -147,17 +141,20 @@ public class BufferPool {
      * the lock cannot be acquired.
      *
      * Marks any pages that were dirtied by the operation as dirty by calling
-     * their markDirty bit.  Does not need to update cached versions of any pages that have 
+     * their markDirty bit.  Does not need to update cached versions of any pages that have
      * been dirtied, as it is not possible that a new page was created during the deletion
      * (note difference from addTuple).
      *
      * @param tid the transaction adding the tuple.
      * @param t the tuple to add
      */
-    public  void deleteTuple(TransactionId tid, Tuple t)
-        throws DbException, TransactionAbortedException {
-        // some code goes here
-        // not necessary for proj1
+    public void deleteTuple(TransactionId tid, Tuple t)
+            throws DbException, TransactionAbortedException {
+        try {
+            Database.getCatalog().getDbFile(t.getRecordId().getPageId().getTableId()).insertTuple(tid,t);
+        } catch (IOException e) {
+            throw new DbException("Table not found");
+        }
     }
 
     /**
@@ -172,13 +169,13 @@ public class BufferPool {
     }
 
     /** Remove the specific page id from the buffer pool.
-        Needed by the recovery manager to ensure that the
-        buffer pool doesn't keep a rolled back page in its
-        cache.
-    */
+     Needed by the recovery manager to ensure that the
+     buffer pool doesn't keep a rolled back page in its
+     cache.
+     */
     public synchronized void discardPage(PageId pid) {
         // some code goes here
-	// not necessary for proj1
+        // not necessary for proj1
     }
 
     /**
