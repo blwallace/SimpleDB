@@ -123,7 +123,7 @@ public class HeapFile implements DbFile {
     // see DbFile.java for javadocs
     public ArrayList<Page> insertTuple(TransactionId tid, Tuple t)
             throws DbException, IOException, TransactionAbortedException {
-        ArrayList<Page> result = new ArrayList<>();
+        ArrayList<Page> result = new ArrayList<Page>();
         for (int i =0; i < numPages(); i ++) {
             HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(getId(), i), Permissions.READ_WRITE);
             if (p.getNumEmptySlots() > 0) {
