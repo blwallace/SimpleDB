@@ -3,6 +3,7 @@ package simpledb;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.Map;
 
 /**
@@ -19,6 +20,8 @@ public class BufferPool {
     // private global variables. _numpages is dicated when object is created
     private int _numPages;
     private HashMap<PageId, Page> _bufferPool;
+
+    private LinkedList<PageId> _linkedList;
 
     /** Bytes per page, including header. */
     public static final int PAGE_SIZE = 4096;
@@ -57,16 +60,21 @@ public class BufferPool {
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException, IOException {
 
-        int i;
-        Page page;
         // look in bufferpool to see if page is present
         if(!_bufferPool.containsKey(pid)){
-            if(_bufferPool.size() < _numPages){
-                _bufferPool.put(pid, Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid));
+            // if page is not present but bufferpool is full
+            if(_bufferPool.size() >= _numPages) {
+                evictPage();
             }
+            // add page to bufferpool
+            _bufferPool.put(pid, Database.getCatalog().getDbFile(pid.getTableId()).readPage(pid));
+        } else {
+            // remove the pid from the linked list
+            _linkedList.remove(pid);
         }
+        //add the pid to the top of the linked list again
+        _linkedList.add(pid);
         return _bufferPool.get(pid);
-
     }
 
     //returns bufferpage size
@@ -162,12 +170,18 @@ public class BufferPool {
      */
     public synchronized void flushAllPages() throws IOException {
         // iterate through all files and flush pages
-        Iterator it = _bufferPool.entrySet().iterator();
+
+        Iterator it = _bufferPool.entrySet().iterator(); // why entry set?
+
+        //Iterator<PageId> it = _bufferPool.keySet().iterator(); // instead of this
+
         while (it.hasNext()) {
+
             Map.Entry pair = (Map.Entry)it.next();
             flushPage((PageId) pair.getKey());
-        }
 
+            //flushPage(it.next()); // use this with keyset iterator
+        }
     }
 
     /** Remove the specific page id from the buffer pool.
@@ -178,6 +192,7 @@ public class BufferPool {
     public synchronized void discardPage(PageId pid) {
         // some code goes here
         // not necessary for proj1
+        _bufferPool.remove(pid);
     }
 
     /**
@@ -202,6 +217,7 @@ public class BufferPool {
     public synchronized  void flushPages(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for proj1
+
     }
 
     /**
@@ -211,6 +227,7 @@ public class BufferPool {
     private synchronized  void evictPage() throws DbException {
         // some code goes here
         // not necessary for proj1
+        discardPage(_linkedList.removeLast());
     }
 
 }
