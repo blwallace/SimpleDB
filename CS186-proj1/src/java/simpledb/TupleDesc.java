@@ -135,6 +135,7 @@ public class TupleDesc implements Serializable {
         if(name == null || _fieldAr == null){
             throw new NoSuchElementException();
         }
+
        for(int i = 0; i < _fieldAr.length; i++) {
            if (_fieldAr[i].matches(name)) {
                return i;

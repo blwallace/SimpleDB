@@ -20,7 +20,6 @@ public class BufferPool {
     // private global variables. _numpages is dicated when object is created
     private int _numPages;
     private HashMap<PageId, Page> _bufferPool;
-
     private LinkedList<PageId> _linkedList;
 
     /** Bytes per page, including header. */
@@ -40,6 +39,7 @@ public class BufferPool {
         _numPages = numPages;
         //create a new bufferpool on memory _numPages long
         _bufferPool = new HashMap<PageId, Page>();
+        _linkedList = new LinkedList<PageId>();
     }
 
     /**
