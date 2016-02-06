@@ -93,10 +93,8 @@ public class IntegerAggregator implements Aggregator {
         }
         tupleValue = (IntField)tup.getField(afield);
 
-        IntField tga = (IntField)tupleGroup;
         IntField tva = (IntField)tupleValue;
 
-        int tg = tga.getValue();
         int tv = tva.getValue();
 
         //value of tuplegroup
