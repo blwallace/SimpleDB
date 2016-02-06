@@ -1,6 +1,6 @@
 package simpledb;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -102,9 +102,11 @@ public class StringAggregator implements Aggregator {
     public DbIterator iterator() {
         // some code goes here
         Iterator iterator = strFieldCount.entrySet().iterator();
-        ArrayList tupleIt = new ArrayList<Tuple>();
+        Tuple[] tupleIt = new Tuple[strFieldCount.size()];
+        int i = 0;
 
         while(iterator.hasNext()){
+
             Map.Entry pair = (Map.Entry)iterator.next();
             System.out.println(pair.getKey() + " = " + pair.getValue());
             Tuple tup = new Tuple(td);
@@ -115,10 +117,14 @@ public class StringAggregator implements Aggregator {
                 tup.setField(0, (Field) pair.getKey());
                 tup.setField(1, (Field) pair.getValue());
             }
-            tupleIt.add(tup);
+            tupleIt[i] = (tup);
+            i++;
         }
-        TupleIterator finalIt = new TupleIterator(td,tupleIt);
+
+        TupleIterator finalIt = new TupleIterator(td,Arrays.asList(tupleIt));
         return finalIt;
     }
+
+
 
 }
