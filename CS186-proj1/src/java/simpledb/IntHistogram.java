@@ -4,6 +4,12 @@ package simpledb;
  */
 public class IntHistogram {
 
+    private int bucketCount;
+    private int bucketList[];
+    private int min;
+    private int max;
+    private int span;
+
     /**
      * Create a new IntHistogram.
      * 
@@ -21,7 +27,17 @@ public class IntHistogram {
      * @param max The maximum integer value that will ever be passed to this class for histogramming
      */
     public IntHistogram(int buckets, int min, int max) {
-    	// some code goes here
+    	//create an array to hold tuple count
+        this.bucketCount = buckets;
+        this.bucketList = new int[bucketCount];
+        this.min = min;
+        this.max = max;
+
+        //determine the span of each histogram.
+        // ie min = 1, max = 10, span = 3.
+        double temp = (max - min + 1) / bucketCount;
+        this.span = (int)Math.ceil(temp);
+
     }
 
     /**
@@ -29,7 +45,13 @@ public class IntHistogram {
      * @param v Value to add to the histogram
      */
     public void addValue(int v) {
-    	// some code goes here
+        //find correct histogram bar
+        int i = (v-min) / span;
+        int temp = bucketList[i];
+        // update value and put it back
+        temp++;
+        bucketList[i] = temp;
+
     }
 
     /**
