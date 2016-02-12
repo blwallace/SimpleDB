@@ -99,12 +99,14 @@ public class TableStats {
 
         HeapFile file = (HeapFile) Database.getCatalog().getDbFile(tableid);
         DbFileIterator<Tuple> tuples = file.iterator(new TransactionId());
+
         int numFields = file.getTupleDesc().numFields();
 
         int[] minInteger = new int[numFields];
         int[] maxInteger = new int[numFields];
 
         try {
+            tuples.open();
             while (tuples.hasNext()) {
                 Tuple t = tuples.next();
                 tupleCount++;
@@ -129,7 +131,7 @@ public class TableStats {
         histograms = new Object[numFields];
         for (int i = 0; i < numFields; i++) {
             if (file.getTupleDesc().getFieldType(i) == Type.INT_TYPE) {
-                IntHistogram gram = new IntHistogram(NUM_HIST_BINS, maxInteger[i], minInteger[i]);
+                IntHistogram gram = new IntHistogram(NUM_HIST_BINS, minInteger[i], maxInteger[i]);
                 histograms[i] = gram;
             } else {
                 StringHistogram gram = new StringHistogram(NUM_HIST_BINS);
@@ -137,9 +139,8 @@ public class TableStats {
             }
         }
 
-
-
         try {
+            tuples.rewind();
             while (tuples.hasNext()) {
                 Tuple t = tuples.next();
                 for (Predicate.Op op : Predicate.Op.values()) {

@@ -100,12 +100,17 @@ public class IntHistogram {
 
     	switch(op) {
             case EQUALS:
+                if(v > max){return 0;}
+                if(v < min){return 0;}
+
                 return equalsB(b_Height);
 
             case GREATER_THAN:
                 // get a fraction
                 if(v > max){return 0;}
-                ratio = (span - Math.abs(span % v));
+                if(v <= min){return 1;}
+
+                ratio = 1 - ((v -min) % span)/ span;
                 selectivity = equalsB(b_Height)*ratio;
                 // iterate through the rest of the buckets
                 for(int j = b_Right; j < bucketCount; j++){
@@ -115,8 +120,9 @@ public class IntHistogram {
 
             case LESS_THAN:
                 if(v < min){return 0;}
+                if(v >= max){return 1;}
                 // get a fraction
-                ratio = (Math.abs(span % v))/ span;
+                ratio =  ((v - min) % span)/ span;
                 selectivity = equalsB(b_Height)*ratio;
                 // iterate through the rest of the buckets
                 for(int j = 0; j < i; j++){
@@ -126,6 +132,7 @@ public class IntHistogram {
 
             case LESS_THAN_OR_EQ:
                 if(v < min){return 0;}
+                if(v >= max){return 1;}
                 selectivity = equalsB(b_Height);
                 // iterate through the rest of the buckets
                 for(int j = 0; j < i; j++){
@@ -135,6 +142,7 @@ public class IntHistogram {
 
             case GREATER_THAN_OR_EQ:
                 if(v > max){return 0;}
+                if(v <= min){return 1;}
                 selectivity = equalsB(b_Height);
                 // iterate through the rest of the buckets
                 for(int j = b_Right; j < bucketCount; j++){
@@ -145,6 +153,9 @@ public class IntHistogram {
             case LIKE:
                 equalsB(b_Height);
             case NOT_EQUALS:
+                if(v > max){return 1;}
+                if(v < min){return 1;}
+
                 return 1 - equalsB(b_Height);
         }
         return 0;
