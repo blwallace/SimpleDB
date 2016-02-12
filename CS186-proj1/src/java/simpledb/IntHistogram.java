@@ -9,6 +9,7 @@ public class IntHistogram {
     private int min;
     private int max;
     private int span;
+    private int ntups;
 
     /**
      * Create a new IntHistogram.
@@ -38,6 +39,8 @@ public class IntHistogram {
         double temp = (max - min + 1) / bucketCount;
         this.span = (int)Math.ceil(temp);
 
+        ntups = 0;
+
     }
 
     /**
@@ -50,6 +53,7 @@ public class IntHistogram {
         int temp = bucketList[i];
         // update value and put it back
         temp++;
+        ntups++;
         bucketList[i] = temp;
 
     }
@@ -66,8 +70,24 @@ public class IntHistogram {
      */
     public double estimateSelectivity(Predicate.Op op, int v) {
 
-    	// some code goes here
-        return -1.0;
+        //find correct histogram bar
+        int i = (v-min) / span;
+        int b_Height = bucketList[i];
+        int b_Right;
+        int b_Left;
+
+    	switch(op) {
+            case EQUALS:
+                return (double) (b_Height/span)/ntups;
+            case GREATER_THAN:
+                break;
+            case LESS_THAN:
+            case LESS_THAN_OR_EQ:
+            case GREATER_THAN_OR_EQ:
+            case LIKE:
+            case NOT_EQUALS:
+        }
+        return 2.1;
     }
     
     /**
