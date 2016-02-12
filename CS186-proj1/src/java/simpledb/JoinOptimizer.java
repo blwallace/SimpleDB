@@ -1,5 +1,7 @@
 package simpledb;
 
+import com.sun.tools.classfile.Opcode;
+
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeCellRenderer;
@@ -244,7 +246,27 @@ public class JoinOptimizer {
 
         // some code goes here
         //Replace the following
-        return joins;
+        PlanCache pc = new PlanCache(); // this is random
+        for (int i = 1; i < joins.size(); i++){
+            Set<Set<LogicalJoinNode>> enumResult = enumerateSubsets(joins,i);
+            for (Set<LogicalJoinNode> s: enumResult){
+
+
+                CostCard bestCard = new CostCard();
+                Set<Set<LogicalJoinNode>> enumResultMinus1 = enumerateSubsets(joins,i - 1);
+                for (Set<LogicalJoinNode> sminus1: enumResultMinus1){
+
+                    LogicalJoinNode minus1 = new LogicalJoinNode(); // this is random
+
+                    bestCard = computeCostAndCardOfSubplan(stats,filterSelectivities,minus1,s,pc.getCost(s),pc);
+                }
+                pc.addPlan(s,bestCard.cost,bestCard.card,bestCard.plan);
+            }
+        }
+        Set<Set<LogicalJoinNode>> enumResult = enumerateSubsets(joins,joins.size());
+        return pc.getOrder((Set<LogicalJoinNode>) enumResult.toArray()[0]);
+
+        //return joins;
     }
 
     // ===================== Private Methods =================================
