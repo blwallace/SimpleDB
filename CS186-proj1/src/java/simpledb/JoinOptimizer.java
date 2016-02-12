@@ -1,9 +1,9 @@
 package simpledb;
 
-import java.util.*;
-
 import javax.swing.*;
-import javax.swing.tree.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeCellRenderer;
+import java.util.*;
 
 /**
  * The JoinOptimizer class is responsible for ordering a series of joins
@@ -111,7 +111,9 @@ public class JoinOptimizer {
             // HINT: You may need to use the variable "j" if you implemented
             // a join algorithm that's more complicated than a basic nested-loops
             // join.
-            return -1.0;
+            // one full scan of cost 1
+            //
+           return cost1 + (card1*cost2);
         }
     }
 
@@ -155,7 +157,27 @@ public class JoinOptimizer {
             boolean t2pkey, Map<String, TableStats> stats,
             Map<String, Integer> tableAliasToId) {
         int card = 1;
-        // some code goes here
+
+        // for equality, when one attribute is primary key, # of tuples produced cannot be larger than the cardinality
+        // of the non primary
+        if(joinOp == Predicate.Op.EQUALS || joinOp == Predicate.Op.NOT_EQUALS){
+            //check primary keys
+            if(t1pkey == t2pkey){
+                return Math.max(card1,card2);
+            }
+            else{
+                if(t1pkey){
+                    return card2;
+                }
+                else if(t2pkey){
+                    return card1;
+                }
+            }
+        }
+        else{
+            return (int)(card1 * card2 * 0.3);
+        }
+
         return card <= 0 ? 1 : card;
     }
 
