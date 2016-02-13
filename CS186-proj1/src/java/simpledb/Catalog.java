@@ -4,10 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * The Catalog keeps track of all available tables in the database and their
@@ -19,18 +16,25 @@ import java.util.UUID;
 
 public class Catalog {
 
-    //creates a list of all tables
-    ArrayList<Table> tables;
-    //keeps track of the numberof tables
-    int _tableNum;
-
     /**
      * Constructor.
      * Creates a new, empty catalog.
      */
-    public Catalog() {
-        tables = new ArrayList<Table>();
+    class Table {
+        DbFile tableFile;
+        String tablePKeyField;
+        String tableName;
     }
+
+    private HashMap<Integer, Table> fileMap;
+    private HashMap<String, Integer> idMap;
+
+    public Catalog() {
+
+        fileMap = new HashMap<Integer, Table>();
+        idMap = new HashMap<String, Integer>();
+    }
+
 
     /**
      * Add a new table to the catalog.
@@ -41,14 +45,15 @@ public class Catalog {
      * @param pkeyField the name of the primary key field
      * conflict exists, use the last table to be added as the table for a given name.
      */
+
     public void addTable(DbFile file, String name, String pkeyField) {
-        Table tb = new Table(file.getId(),file,name,pkeyField);
 
-        //increases the id for tablenum
-        _tableNum++;
-
-        //adds a new table
-        tables.add(tb);
+        Table newTable = new Table();
+        newTable.tableFile = file;
+        newTable.tablePKeyField = pkeyField;
+        newTable.tableName = name;
+        fileMap.put(file.getId(), newTable);
+        idMap.put(name, file.getId());
     }
 
     public void addTable(DbFile file, String name) {
@@ -71,21 +76,9 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public int getTableId(String name) throws NoSuchElementException {
-
-        if(name == null){
+        if (idMap.get(name) == null)
             throw new NoSuchElementException();
-        }
-
-        Iterator iterator = tables.iterator();
-        Table selected;
-        while(iterator.hasNext())
-        {
-            selected = (Table)iterator.next();
-            if(selected.get_name().matches(name)){
-                return selected.get_tableID();
-            }
-        }
-        throw  new NoSuchElementException();
+        return idMap.get(name).intValue();
     }
 
     /**
@@ -96,16 +89,9 @@ public class Catalog {
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
 
-        Iterator iterator = tables.iterator();
-        Table selected;
-        while(iterator.hasNext())
-        {
-            selected = (Table)iterator.next();
-            if(selected.get_tableID() == tableid){
-            return selected.get_tupleDesc();
-        }
-        }
-        throw  new NoSuchElementException();
+
+        return fileMap.get(tableid).tableFile.getTupleDesc();
+
     }
 
     /**
@@ -115,54 +101,47 @@ public class Catalog {
      *     function passed to addTable
      */
     public DbFile getDbFile(int tableid) throws NoSuchElementException {
-        Iterator iterator = tables.iterator();
-        Table selected;
-        while(iterator.hasNext())
-        {
-            selected = (Table)iterator.next();
-            if(selected.get_tableID() == tableid){
-                return selected.get_file();
-            }
-        }
-        throw  new NoSuchElementException();
+        return fileMap.get(tableid).tableFile;
     }
 
     public String getPrimaryKey(int tableid) {
-        Iterator iterator = tables.iterator();
-        Table selected;
-        while(iterator.hasNext())
-        {
-            selected = (Table)iterator.next();
-            if(selected.get_tableID() == tableid){
-                return selected.get_pkeyField();
-            }
-        }
-        throw  new NoSuchElementException();
+        return fileMap.get(tableid).tablePKeyField;
     }
 
     public Iterator<Integer> tableIdIterator() {
-        return null;
+        Iterator<Integer> it = new Iterator<Integer>() {
+
+            private int currentIndex = 0;
+
+            @Override
+            public boolean hasNext() {
+                return currentIndex < fileMap.size() && fileMap.keySet().toArray()[currentIndex] != null;
+            }
+
+            @Override
+            public Integer next() {
+                return (Integer) fileMap.keySet().toArray()[currentIndex++];
+            }
+
+            @Override
+            public void remove() {
+                throw new UnsupportedOperationException();
+            }
+        };
+        return it;
+
     }
 
-    public String getTableName(int tableid) {
-        Iterator iterator = tables.iterator();
-        Table selected;
-        while(iterator.hasNext())
-        {
-            selected = (Table)iterator.next();
-            if(selected.get_tableID() == tableid){
-                return selected.get_name();
-            }
-        }
-        throw  new NoSuchElementException();
+    public String getTableName(int id) {
+        return fileMap.get(id).tableName;
     }
-    
+
     /** Delete all tables from the catalog */
     public void clear() {
-        tables = new ArrayList<Table>();
-        _tableNum = 0;
+        idMap.clear();
+        fileMap.clear();
     }
-    
+
     /**
      * Reads the schema from a file and creates the appropriate tables in the database.
      * @param catalogFile
@@ -172,7 +151,7 @@ public class Catalog {
         String baseFolder=new File(catalogFile).getParent();
         try {
             BufferedReader br = new BufferedReader(new FileReader(new File(catalogFile)));
-            
+
             while ((line = br.readLine()) != null) {
                 //assume line is of the format name (field type, field type, ...)
                 String name = line.substring(0, line.indexOf("(")).trim();
