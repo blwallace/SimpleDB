@@ -329,8 +329,8 @@ public class JoinOptimizer {
         String table2Name = Database.getCatalog().getTableName(
                 this.p.getTableId(j.t2Alias));
 
-        table1Name = j.t1Alias;
-        table2Name = j.t2Alias;
+        //table1Name = j.t1Alias;
+        //  table2Name = j.t2Alias;
 
         String table1Alias = j.t1Alias;
         String table2Alias = j.t2Alias;
