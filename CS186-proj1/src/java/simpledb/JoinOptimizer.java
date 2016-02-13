@@ -247,24 +247,31 @@ public class JoinOptimizer {
         // some code goes here
         //Replace the following
         PlanCache pc = new PlanCache(); // this is random
-        for (int i = 1; i < joins.size(); i++){
+        for (int i = 1; i < joins.size() + 1; i++){
             Set<Set<LogicalJoinNode>> enumResult = enumerateSubsets(joins,i);
             for (Set<LogicalJoinNode> s: enumResult){
 
-
                 CostCard bestCard = new CostCard();
-                Set<Set<LogicalJoinNode>> enumResultMinus1 = enumerateSubsets(joins,i - 1);
-                for (Set<LogicalJoinNode> sminus1: enumResultMinus1){
+                Vector<LogicalJoinNode> v = new Vector(s);
+                pc.addPlan(s,Double.MAX_VALUE,Integer.MAX_VALUE,v);
 
-                    LogicalJoinNode minus1 = new LogicalJoinNode(); // this is random
+                for (LogicalJoinNode node : s) {
 
-                    bestCard = computeCostAndCardOfSubplan(stats,filterSelectivities,minus1,s,pc.getCost(s),pc);
+                    bestCard = computeCostAndCardOfSubplan(stats,filterSelectivities,node,s,pc.getCost(s),pc);
+                    if (bestCard != null)
+                        pc.addPlan(s,bestCard.cost,bestCard.card,bestCard.plan);
                 }
-                pc.addPlan(s,bestCard.cost,bestCard.card,bestCard.plan);
+                if (i == joins.size()) {
+                    Vector<LogicalJoinNode> result = pc.getOrder(s);
+
+                }
             }
+
         }
-        Set<Set<LogicalJoinNode>> enumResult = enumerateSubsets(joins,joins.size());
-        return pc.getOrder((Set<LogicalJoinNode>) enumResult.toArray()[0]);
+
+        Set<LogicalJoinNode> s = new HashSet(joins);
+        Vector<LogicalJoinNode> result = pc.getOrder(s);
+        return result;
 
         //return joins;
     }
@@ -321,6 +328,10 @@ public class JoinOptimizer {
                 this.p.getTableId(j.t1Alias));
         String table2Name = Database.getCatalog().getTableName(
                 this.p.getTableId(j.t2Alias));
+
+        table1Name = j.t1Alias;
+        table2Name = j.t2Alias;
+
         String table1Alias = j.t1Alias;
         String table2Alias = j.t2Alias;
 
@@ -334,6 +345,8 @@ public class JoinOptimizer {
 
         if (news.isEmpty()) { // base case -- both are base relations
             prevBest = new Vector<LogicalJoinNode>();
+            TableStats t1stat = stats.get(table1Name);
+
             t1cost = stats.get(table1Name).estimateScanCost();
             t1card = stats.get(table1Name).estimateTableCardinality(
                     filterSelectivities.get(j.t1Alias));
