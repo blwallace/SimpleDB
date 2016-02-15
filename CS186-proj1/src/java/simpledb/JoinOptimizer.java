@@ -115,7 +115,7 @@ public class JoinOptimizer {
             // join.
             // one full scan of cost 1
             //
-           return cost1 + (card1*cost2) + (card1*cost2);
+            return cost1 + 2*((cost1*card1)*(cost2/cost1));
         }
     }
 
