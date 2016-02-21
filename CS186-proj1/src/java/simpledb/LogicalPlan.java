@@ -319,6 +319,7 @@ public class LogicalPlan {
             TupleDesc td = subplanMap.get(lf.tableAlias).getTupleDesc();
             
             try {//td.fieldNameToIndex(disambiguateName(lf.fieldPureName))
+                //ftyp = td.getFieldType(td.fieldNameToIndex(lf.fieldPureName));  // LAU EDIT
                 ftyp = td.getFieldType(td.fieldNameToIndex(lf.fieldQuantifiedName));
             } catch (java.util.NoSuchElementException e) {
                 throw new ParsingException("Unknown field in filter expression " + lf.fieldQuantifiedName);
@@ -330,6 +331,7 @@ public class LogicalPlan {
 
             Predicate p = null;
             try {
+                //p = new Predicate(subplan.getTupleDesc().fieldNameToIndex(lf.fieldPureName), lf.p,f); // LAU EDIT
                 p = new Predicate(subplan.getTupleDesc().fieldNameToIndex(lf.fieldQuantifiedName), lf.p,f);
             } catch (NoSuchElementException e) {
                 throw new ParsingException("Unknown field " + lf.fieldQuantifiedName);
@@ -337,7 +339,7 @@ public class LogicalPlan {
             subplanMap.put(lf.tableAlias, new Filter(p, subplan));
 
             TableStats s = statsMap.get(Database.getCatalog().getTableName(this.getTableId(lf.tableAlias)));
-            
+            //double sel= s.estimateSelectivity(subplan.getTupleDesc().fieldNameToIndex(lf.fieldPureName), lf.p, f); // LAU EDIT
             double sel= s.estimateSelectivity(subplan.getTupleDesc().fieldNameToIndex(lf.fieldQuantifiedName), lf.p, f);
             filterSelectivities.put(lf.tableAlias, filterSelectivities.get(lf.tableAlias) * sel);
 
@@ -416,10 +418,9 @@ public class LogicalPlan {
             if (si.aggOp != null) {
                 outFields.add(groupByField!=null?1:0);
                 TupleDesc td = node.getTupleDesc();
-//                int  id;
+                int  id;
                 try {
-//                    id = 
-                    td.fieldNameToIndex(si.fname);
+                    id = td.fieldNameToIndex(si.fname);
                 } catch (NoSuchElementException e) {
                     throw new ParsingException("Unknown field " +  si.fname + " in SELECT list");
                 }
@@ -448,7 +449,8 @@ public class LogicalPlan {
                     TupleDesc td = node.getTupleDesc();
                     int id;
                     try {
-                        id = td.fieldNameToIndex(si.fname);
+                        //id = td.fieldNameToIndex(si.fname.split("[.]")[1]);
+                        id = td.fieldNameToIndex(si.fname);// LAU EDIT
                     } catch (NoSuchElementException e) {
                         throw new ParsingException("Unknown field " +  si.fname + " in SELECT list");
                     }

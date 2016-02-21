@@ -10,12 +10,11 @@ public class Filter extends Operator {
     private static final long serialVersionUID = 1L;
     private Predicate p;
     private DbIterator child;
-    private DbIterator[] children;
 
     /**
      * Constructor accepts a predicate to apply and a child operator to read
      * tuples to filter from.
-     * 
+     *
      * @param p
      *            The predicate to filter tuples with
      * @param child
@@ -33,7 +32,13 @@ public class Filter extends Operator {
 
     public TupleDesc getTupleDesc() {
         // some code goes here
-        return child.getTupleDesc();
+        String[] aliases = TupleDesc.getAliasArray(this);
+        TupleDesc childTD = child.getTupleDesc();
+
+
+
+        return TupleDesc.createTupleDescWithAliasArray(childTD, aliases);
+
     }
 
     //@Override
@@ -78,15 +83,11 @@ public class Filter extends Operator {
 
     @Override
     public DbIterator[] getChildren() {
-        // some code goes here
-        //DbIterator[] result = new DbIterator[1];
-        //result[0]= child;
-        return children;
+        return new DbIterator[]{this.child};
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
-        this.children = children;
+        this.child = children[0];
     }
-
 }

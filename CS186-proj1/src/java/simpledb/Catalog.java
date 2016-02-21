@@ -88,8 +88,6 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-
-
         return fileMap.get(tableid).tableFile.getTupleDesc();
 
     }
@@ -109,7 +107,10 @@ public class Catalog {
     }
 
     public Iterator<Integer> tableIdIterator() {
+        return idMap.values().iterator();
+        /*
         Iterator<Integer> it = new Iterator<Integer>() {
+
 
             private int currentIndex = 0;
 
@@ -129,7 +130,7 @@ public class Catalog {
             }
         };
         return it;
-
+*/
     }
 
     public String getTableName(int id) {

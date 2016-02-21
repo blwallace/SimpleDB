@@ -21,6 +21,11 @@ public class OperatorCardinality {
     public static boolean updateOperatorCardinality(Operator o,
             Map<String, Integer> tableAliasToId,
             Map<String, TableStats> tableStats) {
+
+//        System.out.println("0");
+//        System.out.println(o.getChildren()[0].getTupleDesc());
+//        System.out.println("1");
+//        System.out.println(o.getChildren()[1].getTupleDesc());
         if (o instanceof Filter) {
             return updateFilterCardinality((Filter) o, tableAliasToId,
                     tableStats);
@@ -98,6 +103,7 @@ public class OperatorCardinality {
         int child1Card = 1;
         int child2Card = 1;
 
+
         String[] tmp1 = j.getJoinField1Name().split("[.]");
         String tableAlias1 = tmp1[0];
         String pureFieldName1 = tmp1[1];
@@ -105,6 +111,8 @@ public class OperatorCardinality {
         String[] tmp2 = j.getJoinField2Name().split("[.]");
         String tableAlias2 = tmp2[0];
         String pureFieldName2 = tmp2[1];
+
+
 
         boolean child1HasJoinPK = Database.getCatalog()
                 .getPrimaryKey(tableAliasToId.get(tableAlias1))

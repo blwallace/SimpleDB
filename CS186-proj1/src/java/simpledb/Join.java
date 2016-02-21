@@ -12,6 +12,7 @@ public class Join extends Operator {
     private DbIterator child1;
     private DbIterator child2;
     private Tuple t1;
+
     /**
      * Constructor. Accepts to children to join and the predicate to join them
      * on
@@ -39,7 +40,7 @@ public class Join extends Operator {
      *       alias or table name.
      * */
     public String getJoinField1Name() {
-        return child1.getTupleDesc().getFieldName(p.getField1());
+        return getJoinFieldName(child1, p.getField1());
     }
 
     /**
@@ -48,14 +49,48 @@ public class Join extends Operator {
      *       alias or table name.
      * */
     public String getJoinField2Name() {
-        return child2.getTupleDesc().getFieldName(p.getField2());
+        return getJoinFieldName(child2, p.getField2());
     }
 
+
+    private String getJoinFieldName(DbIterator child, int fieldNumber){
+        String fieldName = child.getTupleDesc().getFieldName(fieldNumber);
+        if (child instanceof Join) {
+            Join childJoin = (Join) child;
+            int childFieldNum;
+            DbIterator grandchild;
+            if (fieldNumber < childJoin.child1.getTupleDesc().numFields()) {
+                childFieldNum = fieldNumber;
+                grandchild = childJoin.child1;
+            } else {
+                childFieldNum = fieldNumber - childJoin.child1.getTupleDesc().numFields();
+                grandchild = childJoin.child2;
+            }
+            return getJoinFieldName(grandchild, childFieldNum);
+        } else {
+            return getNonJoinChildAlias(child) + "." + fieldName;
+        }
+
+    }
+
+    private String getNonJoinChildAlias(DbIterator child) {
+        if (child instanceof SeqScan) {
+            return ((SeqScan) child).getAlias();
+        } else if (child instanceof Filter) {
+            return getNonJoinChildAlias(((Filter) child).getChildren()[0]);
+        } else if (child instanceof Project) {
+            return getNonJoinChildAlias(((Project) child).getChildren()[0]);
+        }
+        return null;
+    }
     /**
      * @see simpledb.TupleDesc#merge(TupleDesc, TupleDesc) for possible
      *      implementation logic.
      */
     public TupleDesc getTupleDesc() {
+
+
+
         return TupleDesc.merge(child1.getTupleDesc(), child2.getTupleDesc());
     }
 
@@ -141,13 +176,13 @@ public class Join extends Operator {
 
     @Override
     public DbIterator[] getChildren() {
-        // some code goes here
-        return null;
+        return new DbIterator[]{this.child1, this.child2};
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
-        // some code goes here
+        this.child1 = children[0];
+        this.child2 = children[1];
     }
 
 }

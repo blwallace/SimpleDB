@@ -82,15 +82,12 @@ public class Project extends Operator {
 
     @Override
     public DbIterator[] getChildren() {
-        return new DbIterator[] { this.child };
+        return new DbIterator[]{this.child};
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
-	if (this.child!=children[0])
-	{
-	    this.child = children[0];
-	}
+        this.child = children[0];
     }
     
 }

@@ -18,6 +18,7 @@ public class Aggregate extends Operator {
     private Aggregator aggregator;
     private TupleDesc td;
 
+
     /**
      * Constructor.
      *
@@ -41,6 +42,7 @@ public class Aggregate extends Operator {
         this.afield = afield;
         this.gfield = gfield;
         this.aop = aop;
+        DbIterator _children[] = new DbIterator[1];
 
         // variables for our td and building our td
         Type[] typeAr;
@@ -195,13 +197,12 @@ public class Aggregate extends Operator {
 
     @Override
     public DbIterator[] getChildren() {
-        // some code goes here
-        return null;
+        return new DbIterator[]{this.child};
     }
 
     @Override
     public void setChildren(DbIterator[] children) {
-        // some code goes here
+        this.child = children[0];
     }
 
 }

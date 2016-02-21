@@ -1,6 +1,5 @@
 package simpledb;
 
-import com.sun.tools.classfile.Opcode;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -51,7 +50,8 @@ public class JoinOptimizer {
         DbIterator j;
 
         try {
-            t1id = plan1.getTupleDesc().fieldNameToIndex(lj.f1QuantifiedName);
+            //t1id = plan1.getTupleDesc().fieldNameToIndex(lj.f1PureName);
+            t1id = plan1.getTupleDesc().fieldNameToIndex(lj.f1QuantifiedName); // LAU EDIT
         } catch (NoSuchElementException e) {
             throw new ParsingException("Unknown field " + lj.f1QuantifiedName);
         }
@@ -60,8 +60,10 @@ public class JoinOptimizer {
             t2id = 0;
         } else {
             try {
+                //t2id = plan2.getTupleDesc().fieldNameToIndex(
+                //        lj.f2PureName);
                 t2id = plan2.getTupleDesc().fieldNameToIndex(
-                        lj.f2QuantifiedName);
+                        lj.f2QuantifiedName);// LAU EDIT
             } catch (NoSuchElementException e) {
                 throw new ParsingException("Unknown field "
                         + lj.f2QuantifiedName);
@@ -246,13 +248,16 @@ public class JoinOptimizer {
 
         // some code goes here
         //Replace the following
+        if (joins.size() == 0)
+            return new Vector<LogicalJoinNode>();
+
         PlanCache pc = new PlanCache(); // this is random
         for (int i = 1; i < joins.size() + 1; i++){
             Set<Set<LogicalJoinNode>> enumResult = enumerateSubsets(joins,i);
             for (Set<LogicalJoinNode> s: enumResult){
 
                 CostCard bestCard = new CostCard();
-                Vector<LogicalJoinNode> v = new Vector(s);
+                Vector<LogicalJoinNode> v = new Vector<LogicalJoinNode>(s);
                 pc.addPlan(s,Double.MAX_VALUE,Integer.MAX_VALUE,v);
 
                 for (LogicalJoinNode node : s) {
@@ -269,7 +274,7 @@ public class JoinOptimizer {
 
         }
 
-        Set<LogicalJoinNode> s = new HashSet(joins);
+        Set<LogicalJoinNode> s = new HashSet<LogicalJoinNode>(joins);
         Vector<LogicalJoinNode> result = pc.getOrder(s);
         return result;
 

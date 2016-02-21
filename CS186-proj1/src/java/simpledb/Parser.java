@@ -297,8 +297,7 @@ public class Parser {
                         "updateOperatorCardinality", p, h, h);
 
                 System.out.println("The query plan is:");
-                m.invoke(null, (Operator) physicalPlan,
-                        lp.getTableAliasToIdMapping(), TableStats.getStatsMap());
+                m.invoke(null, (Operator) physicalPlan, lp.getTableAliasToIdMapping(), TableStats.getStatsMap());
                 c = Class.forName("simpledb.QueryPlanVisualizer");
                 m = c.getMethod(
                         "printQueryPlanTree", DbIterator.class, System.out.getClass());

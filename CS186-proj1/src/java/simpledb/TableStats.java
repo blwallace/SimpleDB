@@ -98,7 +98,7 @@ public class TableStats {
         tupleCount = 0;
 
         HeapFile file = (HeapFile) Database.getCatalog().getDbFile(tableid);
-        DbFileIterator<Tuple> tuples = file.iterator(new TransactionId());
+        DbFileIterator tuples = file.iterator(new TransactionId());
 
         int numFields = file.getTupleDesc().numFields();
 
@@ -210,8 +210,33 @@ public class TableStats {
      * expected selectivity. You may estimate this value from the histograms.
      * */
     public double avgSelectivity(int field, Predicate.Op op) {
+        switch (op) {
+            case EQUALS:
+                if (histograms[field] instanceof IntHistogram) {
+                    IntHistogram intHistogram = (IntHistogram) histograms[field];
+                    return intHistogram.avgSelectivity();
+                } else if (histograms[field] instanceof StringHistogram) {
+                    StringHistogram stringHistogram = (StringHistogram) histograms[field];
+                    return stringHistogram.avgSelectivity();
+                }
+            case NOT_EQUALS:
+                return 1 - avgSelectivity(field, Predicate.Op.EQUALS);
+            case GREATER_THAN:
+                return 1/3;
 
-        // some code goes here
+            case GREATER_THAN_OR_EQ:
+                return 1/3 + avgSelectivity(field, Predicate.Op.EQUALS);
+
+            case LESS_THAN:
+                return 1/3;
+
+            case LESS_THAN_OR_EQ:
+                return 1/3 + avgSelectivity(field, Predicate.Op.EQUALS);
+
+            case LIKE:
+                return avgSelectivity(field, Predicate.Op.EQUALS);
+        }
+
         return 1.0;
     }
 
