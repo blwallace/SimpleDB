@@ -138,7 +138,10 @@ public class Join extends Operator {
 
         while(true) {
             if (t1 == null) {
-                t1 = child1.next();
+                if (child1.hasNext())
+                    t1 = child1.next();
+                else
+                    return null;
             }
 
 
