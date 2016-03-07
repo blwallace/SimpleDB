@@ -1,10 +1,11 @@
-package simpledb;
+package simpledb.simpledb;
 
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -21,6 +22,8 @@ public class BufferPool {
     private int _numPages;
     private HashMap<PageId, Page> _bufferPool;
     private LinkedList<PageId> _linkedList;
+    private ConcurrentHashMap<PageId,TransactionId> shared;
+    private ConcurrentHashMap<PageId,TransactionId> exclusive;
 
     /** Bytes per page, including header. */
     public static final int PAGE_SIZE = 4096;
@@ -40,6 +43,8 @@ public class BufferPool {
         //create a new bufferpool on memory _numPages long
         _bufferPool = new HashMap<PageId, Page>();
         _linkedList = new LinkedList<PageId>();
+        shared = new ConcurrentHashMap<PageId,TransactionId>();
+        exclusive = new ConcurrentHashMap<PageId,TransactionId>();
     }
 
     /**
@@ -59,6 +64,16 @@ public class BufferPool {
      */
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException, IOException {
+
+        synchronized (this){
+
+            if(shared.containsKey(pid) && perm != Permissions.READ_ONLY){
+                while(true){
+
+                }
+            }
+            setLock(tid,pid,perm);
+        }
 
         // look in bufferpool to see if page is present
         if(!_bufferPool.containsKey(pid)){
@@ -94,6 +109,19 @@ public class BufferPool {
     public  void releasePage(TransactionId tid, PageId pid) {
         // some code goes here
         // not necessary for proj1
+        TransactionId tempTid;
+        if(shared.containsKey(pid)){
+            tempTid = shared.get(pid);
+            if(tempTid == tid){
+                shared.remove(pid);
+            }
+        }
+        if(exclusive.containsKey(pid)){
+            tempTid = exclusive.get(pid);
+            if(tempTid == tid){
+                exclusive.remove(pid);
+            }
+        }
     }
 
     /**
@@ -106,10 +134,34 @@ public class BufferPool {
         // not necessary for proj1
     }
 
+    public void setLock(TransactionId tid, PageId pid, Permissions perm){
+
+        if(perm == Permissions.READ_ONLY){
+            shared.put(pid,tid);
+        }
+        if(perm == Permissions.READ_WRITE){
+            exclusive.put(pid,tid);
+        }
+
+    }
+
     /** Return true if the specified transaction has a lock on the specified page */
-    public boolean holdsLock(TransactionId tid, PageId p) {
+    public boolean holdsLock(TransactionId tid, PageId pid) {
         // some code goes here
         // not necessary for proj1
+        TransactionId tempTid;
+        if(shared.containsKey(pid)){
+            tempTid = shared.get(pid);
+            if(tempTid == tid){
+                return true;
+            }
+        }
+        if(exclusive.containsKey(pid)){
+            tempTid = exclusive.get(pid);
+            if(tempTid == tid){
+                return true;
+            }
+        }
         return false;
     }
 
