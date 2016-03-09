@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -24,6 +25,7 @@ public class BufferPool {
     private LinkedList<PageId> _linkedList;
     private ConcurrentHashMap<PageId,TransactionId> shared;
     private ConcurrentHashMap<PageId,TransactionId> exclusive;
+    int timeOut = 0;
 
     /** Bytes per page, including header. */
     public static final int PAGE_SIZE = 4096;
@@ -72,22 +74,38 @@ public class BufferPool {
         synchronized (this){
 
             if(shared.containsKey(pid) && perm == Permissions.READ_WRITE && shared.get(pid) == tid){
-                setLock(tid,pid,perm);
+                setLock(tid, pid, perm);
             }
             else if(exclusive.containsKey(pid) && perm == Permissions.READ_ONLY && exclusive.get(pid) == tid){
                 setLock(tid, pid, perm);
             }
+            else if(exclusive.containsKey(pid) && perm == Permissions.READ_WRITE && exclusive.get(pid) != tid) {
+                throw new TransactionAbortedException();
+            }
             else if(exclusive.containsKey(pid) && perm != Permissions.READ_WRITE){
-                while(true){
-
+                timeOut++;
+                if(timeOut < 10){
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(300);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
+                throw new TransactionAbortedException();
             }
             else if(shared.containsKey(pid) && perm != Permissions.READ_ONLY){
-                while(true){
-
+                timeOut++;
+                if(timeOut < 10){
+                    try {
+                        TimeUnit.MILLISECONDS.sleep(300);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
                 }
+                throw new TransactionAbortedException();
             }
-            setLock(tid,pid,perm);
+
+            setLock(tid, pid, perm);
         }
 
         // look in bufferpool to see if page is present
