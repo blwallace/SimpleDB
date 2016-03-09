@@ -1,4 +1,4 @@
-package simpledb.simpledb;
+package simpledb;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -67,7 +67,18 @@ public class BufferPool {
 
         synchronized (this){
 
-            if(shared.containsKey(pid) && perm != Permissions.READ_ONLY){
+            if(shared.containsKey(pid) && perm == Permissions.READ_WRITE && shared.get(pid) == tid){
+                setLock(tid,pid,perm);
+            }
+            else if(exclusive.containsKey(pid) && perm == Permissions.READ_ONLY && exclusive.get(pid) == tid){
+                setLock(tid, pid, perm);
+            }
+            else if(exclusive.containsKey(pid) && perm != Permissions.READ_WRITE){
+                while(true){
+
+                }
+            }
+            else if(shared.containsKey(pid) && perm != Permissions.READ_ONLY){
                 while(true){
 
                 }
