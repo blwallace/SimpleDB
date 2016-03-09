@@ -80,7 +80,11 @@ public class BufferPool {
                 setLock(tid, pid, perm);
             }
             else if(exclusive.containsKey(pid) && perm == Permissions.READ_WRITE && exclusive.get(pid) != tid) {
-                throw new TransactionAbortedException();
+                try {
+                    TimeUnit.MILLISECONDS.sleep(300);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
             }
             else if(exclusive.containsKey(pid) && perm != Permissions.READ_WRITE){
                 timeOut++;
