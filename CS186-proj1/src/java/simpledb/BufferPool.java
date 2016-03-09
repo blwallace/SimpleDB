@@ -1,4 +1,4 @@
-package simpledb;
+package simpledb.simpledb;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -64,6 +64,10 @@ public class BufferPool {
      */
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
             throws TransactionAbortedException, DbException, IOException {
+
+        if(tid == null){
+            tid = new TransactionId();
+        }
 
         synchronized (this){
 
@@ -290,7 +294,29 @@ public class BufferPool {
     private synchronized  void evictPage() throws DbException {
         // some code goes here
         // not necessary for proj1
-        discardPage(_linkedList.removeLast());
+
+        Iterator it = _bufferPool.entrySet().iterator();
+        while(it.hasNext()) {
+            Map.Entry pair = (Map.Entry)it.next();
+            HeapPage p = (HeapPage) pair.getValue();
+            if (p.isDirty() == null) {
+                _bufferPool.remove(p);
+                _linkedList.remove(p.getId());
+            }
+        }
+
+//        Iterator itt = _bufferPool.entrySet().iterator();
+//        while(itt.hasNext()) {
+//            Map.Entry pair = (Map.Entry)it.next();
+//            HeapPage p = (HeapPage) pair.getValue();
+//            if (p.isDirty() == null) {
+//                _bufferPool.remove(p);
+//                _bufferPool.remove(p);
+//                _linkedList.remove(p.getId());
+//            }
+//        }
+        throw new DbException("No mo clean pages");
     }
+
 
 }
