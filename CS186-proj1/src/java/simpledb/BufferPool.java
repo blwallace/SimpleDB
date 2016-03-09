@@ -147,6 +147,7 @@ public class BufferPool {
     public void transactionComplete(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for proj1
+        transactionComplete(tid,true);
     }
 
     public void setLock(TransactionId tid, PageId pid, Permissions perm){
@@ -191,6 +192,52 @@ public class BufferPool {
             throws IOException {
         // some code goes here
         // not necessary for proj1
+        Iterator it = _bufferPool.entrySet().iterator();
+
+        if(commit){
+            while(it.hasNext()) {
+                Map.Entry pair = (Map.Entry)it.next();
+                HeapPage p = (HeapPage) pair.getValue();
+                if (p.isDirty() != null && p.isDirty().equals(tid)) {
+                    p.setBeforeImage();
+                    flushPage(p.getId());
+                }
+            }
+        }
+        else{
+            while(it.hasNext()) {
+                Map.Entry pair = (Map.Entry)it.next();
+                HeapPage p = (HeapPage) pair.getValue();
+                if (p.isDirty() != null && p.isDirty().equals(tid)) {
+                   _bufferPool.put(p.getId(),p.getBeforeImage());
+                }
+            }
+        }
+
+        Iterator itShared = shared.entrySet().iterator();
+        while(itShared.hasNext()) {
+            Map.Entry pair = (Map.Entry)itShared.next();
+            HeapPageId pid = (HeapPageId) pair.getKey();
+            TransactionId t = (TransactionId) pair.getValue();
+            if(t == tid){
+                releasePage(t,pid);
+                shared.remove(pid);
+            }
+        }
+
+        Iterator itExc = exclusive.entrySet().iterator();
+        while(itExc.hasNext()) {
+            Map.Entry pair = (Map.Entry)itExc.next();
+            HeapPageId pid = (HeapPageId) pair.getKey();
+            TransactionId t = (TransactionId) pair.getValue();
+            if(t == tid){
+                releasePage(t,pid);
+                exclusive.remove(pid);
+            }
+        }
+
+
+
     }
 
     /**
@@ -294,28 +341,22 @@ public class BufferPool {
     private synchronized  void evictPage() throws DbException {
         // some code goes here
         // not necessary for proj1
+        boolean cleanP = true;
 
         Iterator it = _bufferPool.entrySet().iterator();
         while(it.hasNext()) {
+            cleanP = false;
             Map.Entry pair = (Map.Entry)it.next();
             HeapPage p = (HeapPage) pair.getValue();
             if (p.isDirty() == null) {
-                _bufferPool.remove(p);
+                it.remove();
                 _linkedList.remove(p.getId());
             }
         }
 
-//        Iterator itt = _bufferPool.entrySet().iterator();
-//        while(itt.hasNext()) {
-//            Map.Entry pair = (Map.Entry)it.next();
-//            HeapPage p = (HeapPage) pair.getValue();
-//            if (p.isDirty() == null) {
-//                _bufferPool.remove(p);
-//                _bufferPool.remove(p);
-//                _linkedList.remove(p.getId());
-//            }
-//        }
-        throw new DbException("No mo clean pages");
+        if(cleanP){
+            throw new DbException("No mo clean pages");
+        }
     }
 
 
