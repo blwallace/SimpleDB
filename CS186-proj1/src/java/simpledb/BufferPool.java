@@ -1,4 +1,4 @@
-package simpledb.simpledb;
+package simpledb;
 
 import java.io.IOException;
 import java.util.HashMap;
