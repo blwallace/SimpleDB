@@ -108,29 +108,7 @@ public class Catalog {
 
     public Iterator<Integer> tableIdIterator() {
         return idMap.values().iterator();
-        /*
-        Iterator<Integer> it = new Iterator<Integer>() {
 
-
-            private int currentIndex = 0;
-
-            @Override
-            public boolean hasNext() {
-                return currentIndex < fileMap.size() && fileMap.keySet().toArray()[currentIndex] != null;
-            }
-
-            @Override
-            public Integer next() {
-                return (Integer) fileMap.keySet().toArray()[currentIndex++];
-            }
-
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
-        return it;
-*/
     }
 
     public String getTableName(int id) {

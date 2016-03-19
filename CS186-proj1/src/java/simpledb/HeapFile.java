@@ -125,8 +125,10 @@ public class HeapFile implements DbFile {
             throws DbException, IOException, TransactionAbortedException {
         ArrayList<Page> result = new ArrayList<Page>();
         for (int i =0; i < numPages(); i ++) {
-            HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(getId(), i), Permissions.READ_WRITE);
+            HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, new HeapPageId(getId(), i), Permissions.READ_ONLY);
             if (p.getNumEmptySlots() > 0) {
+                //Database.getBufferPool().releasePage(tid, p.pid);
+                p = (HeapPage) Database.getBufferPool().getPage(tid, p.pid, Permissions.READ_WRITE);
                 p.insertTuple(t);
                 p.markDirty(true, tid);
                 result.add(p);
@@ -183,7 +185,7 @@ public class HeapFile implements DbFile {
                 pageNo = 0;
 
                 try {
-                    page = (HeapPage) Database.getBufferPool().getPage(transactionId,new HeapPageId(getId(), pageNo),Permissions.READ_WRITE);
+                    page = (HeapPage) Database.getBufferPool().getPage(transactionId,new HeapPageId(getId(), pageNo),Permissions.READ_ONLY);
                     currentIterator = page.iterator();
                 } catch (TransactionAbortedException e) {
                     e.printStackTrace();
@@ -216,7 +218,7 @@ public class HeapFile implements DbFile {
                             break;
 
                         try {
-                            page = (HeapPage) Database.getBufferPool().getPage(transactionId, new HeapPageId(getId(), pageNo), Permissions.READ_WRITE);
+                            page = (HeapPage) Database.getBufferPool().getPage(transactionId, new HeapPageId(getId(), pageNo), Permissions.READ_ONLY);
 
                             if (page == null) {
                                 return false;
