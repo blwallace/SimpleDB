@@ -23,14 +23,8 @@ public class BufferPool {
     private int _numPages;
     private HashMap<PageId, Page> _bufferPool;
     private LinkedList<PageId> _linkedList;
-    private final ConcurrentHashMap<PageId, Object> locks =  new ConcurrentHashMap<PageId, Object>();;
 
-    private ConcurrentHashMap<PageId,HashSet<TransactionId>> shared;
-    private ConcurrentHashMap<PageId,TransactionId> exclusive;
-    private ConcurrentHashMap<TransactionId,HashSet<TransactionId>> dependents = new ConcurrentHashMap<TransactionId,HashSet<TransactionId>>();;
-    private ConcurrentHashSet<TransactionId> expiredTransactionSet = new ConcurrentHashSet<TransactionId>();
-    private ConcurrentLinkedQueue<TransactionId> transactionQueue = new ConcurrentLinkedQueue<TransactionId>();
-
+    private LockManager lockManager = new LockManager();
 
     int timeOut = 0;
 
@@ -52,8 +46,8 @@ public class BufferPool {
         //create a new bufferpool on memory _numPages long
         _bufferPool = new HashMap<PageId, Page>();
         _linkedList = new LinkedList<PageId>();
-        shared = new ConcurrentHashMap<PageId,HashSet<TransactionId>>();
-        exclusive = new ConcurrentHashMap<PageId,TransactionId>();
+
+
 
     }
 
@@ -78,47 +72,7 @@ public class BufferPool {
         if(tid == null){
             tid = new TransactionId();
         }
-
-        // page shared + write
-        // page shared + read
-        // page ex + read
-        // page ex + write
-//        if (expiredTransactionSet.contains(tid))
-//            throw new TransactionAbortedException();
-
-        Object lock = getLock(pid);
-        if (!transactionQueue.contains(tid))
-            transactionQueue.add(tid);
-
-
-        synchronized (lock) {
-            int timer = 0;
-            while (isLocked(tid, pid, perm)) {
-                if (timer > 60) {
-                    if (shared.get(pid) != null && !expiredTransactionSet.contains(tid)) {
-                        for (TransactionId id : shared.get(pid)) {
-                            if (tid != id)
-                                transactionComplete(id, false);
-                        }
-                        break;
-                    }
-                    if (exclusive.get(pid)!= null)
-                        transactionComplete(exclusive.get(pid), false);
-
-                    System.out.println("BREAK " + tid);
-                }
-                try {
-                    timer++;
-                    TimeUnit.MILLISECONDS.sleep(100);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            setLock(tid, pid, perm);
-
-        }
-
+        lockManager.getLock(tid, pid, perm);
 
         // look in bufferpool to see if page is present
         if(!_bufferPool.containsKey(pid)){
@@ -140,72 +94,9 @@ public class BufferPool {
         return _bufferPool.get(pid);
     }
 
-    private Object getLock(PageId pageId) {
-        locks.putIfAbsent(pageId, new Object());
-        return locks.get(pageId);
-    }
-
-    public boolean inShared(PageId pid, TransactionId tid) {
-        HashSet<TransactionId> set = shared.get(pid);
-        if (set == null)
-            return false;
-        return set.contains(tid);
-    }
-
-    public void addDependent(TransactionId primaryID, TransactionId dependent) {
-        if (!dependents.containsKey(primaryID))
-            dependents.put(primaryID, new HashSet<TransactionId>());
-        HashSet<TransactionId> set = dependents.get(primaryID);
-        set.add(dependent);
-    }
-
-    public boolean checkIfDependentsDone(TransactionId tid) {
-        if (dependents.get(tid) == null)
-            return true;
-        for ( TransactionId id : dependents.get(tid)) {
-            if (!expiredTransactionSet.contains(id))
-                return false;
-        }
-        return true;
-    }
 
 
-    public boolean isLocked(TransactionId tid, PageId pid, Permissions perm){
-        if (perm == Permissions.READ_WRITE) {
-            return isSharedLocked(pid, tid) || isExclusiveLocked(pid, tid);
-        } else if (perm == Permissions.READ_ONLY){
-            return isExclusiveLocked(pid, tid);
-        }
-        return false;
-    }
 
-
-    public boolean isSharedLocked(PageId pid, TransactionId tid) {
-        HashSet<TransactionId> set = shared.get(pid);
-        if (set == null || set.contains(tid) || set.size() > 1)
-            return false;
-        return true;
-    }
-
-    public boolean isExclusiveLocked(PageId pid, TransactionId tid) {
-        return exclusive.get(pid) != tid && exclusive.get(pid) != null;
-    }
-
-    public void removeFromShared(PageId pid, TransactionId tid){
-
-        HashSet<TransactionId> set = shared.get(pid);
-        if (set != null)
-            set.remove(tid);
-    }
-
-    public void putToShared(PageId pid, TransactionId tid){
-        HashSet<TransactionId> set = shared.get(pid);
-        if (set == null) {
-            set = new HashSet<TransactionId>();
-        }
-        set.add(tid);
-        shared.put(pid, set);
-    }
     //returns bufferpage size
     public int getPageSize(){
         return PAGE_SIZE;
@@ -223,18 +114,8 @@ public class BufferPool {
     public  void releasePage(TransactionId tid, PageId pid) {
         // some code goes here
         // not necessary for proj1
-        System.out.println("Manual Release" + tid + " " + pid);
+        lockManager.releaseLock(tid, pid);
 
-        TransactionId tempTid;
-        if(shared.containsKey(pid)){
-            removeFromShared(pid, tid);
-        }
-        if(exclusive.containsKey(pid)){
-            tempTid = exclusive.get(pid);
-            if(tempTid == tid){
-                exclusive.remove(pid);
-            }
-        }
     }
 
     /**
@@ -249,37 +130,14 @@ public class BufferPool {
         transactionComplete(tid,true);
     }
 
-    public void setLock(TransactionId tid, PageId pid, Permissions perm){
-        //System.out.println("LOCK ME BABY " + tid.toString());
-        if(perm == Permissions.READ_ONLY){
-            putToShared(pid, tid);
 
-            //shared.put(pid,tid);
-        }
-        if(perm == Permissions.READ_WRITE){
-            exclusive.put(pid,tid);
-        }
-
-    }
 
     /** Return true if the specified transaction has a lock on the specified page */
     public boolean holdsLock(TransactionId tid, PageId pid) {
         // some code goes here
         // not necessary for proj1
 
-        TransactionId tempTid;
-        if(shared.containsKey(pid)){
-            if (inShared(pid, tid)){
-                return true;
-            }
-        }
-        if(exclusive.containsKey(pid)){
-            tempTid = exclusive.get(pid);
-            if(tempTid == tid){
-                return true;
-            }
-        }
-        return false;
+        return lockManager.holdsLock(tid, pid);
     }
 
     /**
@@ -291,11 +149,9 @@ public class BufferPool {
      */
     public void transactionComplete(TransactionId tid, boolean commit)
             throws IOException {
-        expiredTransactionSet.add(tid);
 
         // some code goes here
         // not necessary for proj1
-        System.out.println("RELEASED " + tid.toString());
 
 
         Iterator it = _bufferPool.entrySet().iterator();
@@ -318,15 +174,7 @@ public class BufferPool {
                 }
             }
         }
-        for (PageId pid : exclusive.keySet()){
-            if (exclusive.get(pid) == tid)
-                exclusive.remove(pid);
-        }
-        for (PageId pid : shared.keySet()){
-            if (inShared(pid, tid))
-                removeFromShared(pid, tid);
-        }
-        transactionQueue.remove(tid);
+        lockManager.releaseAllLocks(tid);
     }
 
     /**
@@ -363,6 +211,7 @@ public class BufferPool {
      */
     public void deleteTuple(TransactionId tid, Tuple t)
             throws DbException, TransactionAbortedException {
+
         Database.getCatalog().getDbFile(t.getRecordId().getPageId().getTableId()).deleteTuple(tid, t);
     }
 
@@ -420,6 +269,11 @@ public class BufferPool {
     public synchronized  void flushPages(TransactionId tid) throws IOException {
         // some code goes here
         // not necessary for proj1
+        for (Page page : _bufferPool.values()) {
+            if (page.isDirty() !=null && page.isDirty()==tid) {
+                flushPage(page.getId());
+            }
+        }
 
     }
 
