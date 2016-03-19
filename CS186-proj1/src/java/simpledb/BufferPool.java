@@ -1,7 +1,7 @@
 package simpledb;
 
-import org.apache.mina.util.ConcurrentHashSet;
 
+import org.apache.mina.util.ConcurrentHashSet;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,7 +24,6 @@ public class BufferPool {
     private HashMap<PageId, Page> _bufferPool;
     private LinkedList<PageId> _linkedList;
     private final ConcurrentHashMap<PageId, Object> locks =  new ConcurrentHashMap<PageId, Object>();;
-    private Lock lock = new Lock();
 
     private ConcurrentHashMap<PageId,HashSet<TransactionId>> shared;
     private ConcurrentHashMap<PageId,TransactionId> exclusive;
@@ -87,7 +86,7 @@ public class BufferPool {
 //        if (expiredTransactionSet.contains(tid))
 //            throw new TransactionAbortedException();
 
-
+        Object lock = getLock(pid);
         if (!transactionQueue.contains(tid))
             transactionQueue.add(tid);
 
